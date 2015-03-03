@@ -12,7 +12,10 @@
 #pragma link C++ class sample+;
 #pragma link C++ class sbn::EventSample+;
 #pragma link C++ class sbn::Detector+;
+#pragma link C++ class sbn::NtupleReader+;
+#pragma link C++ class sbn::readConfig+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 

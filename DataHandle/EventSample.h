@@ -18,6 +18,7 @@
 #include <vector> 
 
 #include "basedata.h"
+#include "NtupleReader.h"
 
 /**
    \class EventSample
@@ -34,7 +35,30 @@ namespace sbn{
   public:
 
     /// Default constructor
-    EventSample(){}
+    EventSample(){
+    // This is purely for testing, to be removed once upstream
+    // setup is working
+    config.signal                = kNue;
+    config.path                  = "/media/cadams/data_linux/testFramework/";
+    config.basel                 = kNearDet;
+    config.mode                  = kNu;
+    config.energy                = kCaloNoNeutrals;
+    config.npoints               = 500;
+    config.forceRemake           = false;
+    config.includeOsc            = true;
+    config.multiWeightSource     = 0;
+    config.usingMultiWeights     = false;
+    config.absolute_MWSource     = false;
+    config.nWeights              = 250;
+    // config.includeCosmics        = r.includeCosmics;
+    // config.includeDirt           = r.includeDirt;
+    config.showerContainmentDist = -999;
+    config.minDistanceToStart    = -999;
+    config.minVertexEnergySignal = 0;
+    config.minVertexEnergyPhoton = 0.05;
+    config.minShowerGap          = 3.0;
+    return;
+	}
     EventSample(readConfig r, int signal, int basel, int energy, int mode);
 
     /// Default destructor
@@ -83,12 +107,13 @@ namespace sbn{
 
     /*This section is a breakdown of the nominal data by type. */
     std::vector<std::vector<float> >   nominalDataByType;
-    std::vector<std::string>           nominalDataLegend;
 
 
     /*This section is multiweight data, if needed */
     std::vector<std::vector<float> > nominalDataMultiWeight;
  
+    NtupleReader reader;
+
   };
 
 } //namespace sbn
