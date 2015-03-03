@@ -37,6 +37,10 @@ namespace sbn {
     /// Default destructor
     ~Detector(){}
 
+    // Work flow functions:
+    bool init(); //Calls init on all owned EventSample classes
+    bool read(); //Calls read on all owned EventSample classes
+
     // Return the combined vector of data
     std::vector<float> const &  getCombinedData();
     //The osc data, returns the closest match in sin22th, dm2 space

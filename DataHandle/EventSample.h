@@ -40,6 +40,10 @@ namespace sbn{
     /// Default destructor
     ~EventSample(){}
 
+    // Work flow functions:
+    bool init(); //initializes the reader object, verifies that the files are there
+    bool read(); //reads in (or generates) the data
+
     /// Get the data:
     std::vector<float> const &  getData() const;
     //The osc data, returns the closest match in sin22th, dm2 space
