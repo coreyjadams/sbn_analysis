@@ -62,8 +62,8 @@ namespace sbn{
                   std::vector<std::vector<float> > & nominalDataByType);
     void readDataOsc(std::vector<std::vector<float> > & outputOsc);
 
-    std::vector<float> GetCosmicsFromFile();
-    std::vector<float> GetDirtFromFile();
+    // std::vector<float> GetCosmicsFromFile();
+    // std::vector<float> GetDirtFromFile();
 
   private:
 

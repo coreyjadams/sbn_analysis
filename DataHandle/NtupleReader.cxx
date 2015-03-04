@@ -190,10 +190,8 @@ namespace sbn {
   {
 
     // Resize the returning vectors and get them ready:
-    std::cout << "Got here ...\n" << std::endl;
 
     output.resize(defaultBins.size()-1);
-    std::cout << "Got here ...\n" << std::endl;
     switch (config.signal)
     {
       case kNue:
@@ -207,7 +205,6 @@ namespace sbn {
     }
     for (auto & vec : nominalDataByType) vec.resize(defaultBins.size()-1);
 
-    std::cout << "Got here ...\n" << std::endl;
 
     if (remakeHist) Loop(output, nominalDataByType);
     else  Read(output, nominalDataByType);
@@ -289,11 +286,11 @@ namespace sbn {
         break;
     }
 
-
-    std::vector<std::vector<float> > *MultiWeight;
-    MultiWeight = 0;
-    if (config.usingMultiWeights) 
-      c->SetBranchAddress("MultiWeight",&MultiWeight);
+///MW
+    // std::vector<std::vector<float> > *MultiWeight;
+    // MultiWeight = 0;
+    // if (config.usingMultiWeights) 
+    //   c->SetBranchAddress("MultiWeight",&MultiWeight);
 
     d->SetBranchAddress("wgt",&checking_wgt);
 
@@ -343,8 +340,10 @@ namespace sbn {
       sprintf(nameHolder,"histoByType_%s_%s_%s",  signalMap[config.signal].c_str(),
                                                   baselMap[config.basel].c_str(),
                                                   (*ptrToTypeMap).at(i).c_str());
-      nominalHisto = new TH1F(nameHolder,nameHolder,nbins, &(defaultBins[0]));
+      histosByType[i] = new TH1F(nameHolder,nameHolder,nbins, &(defaultBins[0]));
     }
+
+    std::cout << "histosByType.size() " << histosByType.size() << std::endl;
 
     // Transform histograms into vectors to save to file and report back
 ///MW
@@ -522,17 +521,17 @@ namespace sbn {
 
 
   }
-  // void NtupleReader::LoopOsc(std::vector<std::vector<float> > & outputOsc){
-
-  // }
+  void NtupleReader::LoopOsc(std::vector<std::vector<float> > & outputOsc){
+    return;
+  }
   
-  // void NtupleReader::Read(std::vector<float> &               output,
-  //                         std::vector<std::vector<float> > & nominalDataByType){
-
-  // }
-  // void NtupleReader::ReadOsc(std::vector<std::vector<float> > & outputOsc){
-
-  // }
+  void NtupleReader::Read(std::vector<float> &               output,
+                          std::vector<std::vector<float> > & nominalDataByType){
+    return;
+  }
+  void NtupleReader::ReadOsc(std::vector<std::vector<float> > & outputOsc){
+    return;
+  }
 
 } // sbn
 
