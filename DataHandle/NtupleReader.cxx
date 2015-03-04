@@ -371,6 +371,10 @@ namespace sbn {
         std::cout << "On event " << ievt << " of " << nentries1 << std::endl;
       }
 
+      // This is a temporary fix, I think.
+      // ibkg is off by one wrt this accounting:
+      ibkg --;
+
       // here, do a check on the signal to see which route to take:
       if (config.signal == kNue){
         if ( config.energy == kCCQE && nuchan != 1 &&

@@ -45,7 +45,7 @@ namespace sbn{
     config.energy                = kCaloNoNeutrals;
     config.npoints               = 500;
     config.forceRemake           = false;
-    config.includeOsc            = true;
+    config.includeOsc            = false;
     config.multiWeightSource     = 0;
     config.usingMultiWeights     = false;
     config.absolute_MWSource     = false;
