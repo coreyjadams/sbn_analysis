@@ -38,7 +38,7 @@ namespace sbn{
     EventSample(){
     // This is purely for testing, to be removed once upstream
     // setup is working
-    config.signal                = kNue;
+    config.signal                = kNumu;
     config.path                  = "/media/cadams/data_linux/testFramework/";
     config.basel                 = kNearDet;
     config.mode                  = kNu;

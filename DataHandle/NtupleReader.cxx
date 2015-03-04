@@ -494,6 +494,9 @@ namespace sbn {
       t -> Branch(tempName,&nominalDataByType[i]);
     }
 
+    // Save the config object to the file too!
+    t -> Branch("configuration",&config);
+
 ///MW
     // if (usingMultiWeights){
     //   for (int i = 0; i < nWeights; i ++){
