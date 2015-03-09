@@ -9,13 +9,18 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class sample+;
 #pragma link C++ class sbn::EventSample+;
 #pragma link C++ class sbn::Detector+;
 #pragma link C++ class sbn::NtupleReader+;
 #pragma link C++ class sbn::readConfig+;
+#pragma link C++ class sbn::SampleUtils+;
+#pragma link C++ class sbn::DetUtils+;
+#pragma link C++ class sbn::DataHandle+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
+
+
 
 
 

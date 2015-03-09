@@ -18,9 +18,8 @@ FluxRW::FluxRW()
   fBinSize=0.05; // using histograms with 50MeV bins
   //miniboone histogram file
  // Get the path to the files using the larlight env variable:
-  std::string path = GetEnv("MAKE_TOP_DIR");
-
-  path.append("/UserDev/lar1Osc/");
+  std::string path = GetEnv("LARLITE_USERDEVDIR");
+  path.append("/sbn_analysis/Reprocessing/");
   std::string mbhistfile= path;
   mbhistfile.append("FluxRW/hist/april07_baseline_rgen610.6_flux.root");
   // std::cout <<"Loading BNB flux histograms from "<<mbhistfile<<std::endl;

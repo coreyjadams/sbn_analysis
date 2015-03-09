@@ -33,8 +33,8 @@ horn2boost::horn2boost(std::string horn2conf)
 
 
   // Get the path to the files using the larlight env variable:
-  std::string path = GetEnv("MAKE_TOP_DIR");
-  path.append("/UserDev/lar1Osc/");
+  std::string path = GetEnv("LARLITE_USERDEVDIR");
+  path.append("/sbn_analysis/Reprocessing/");
 
   for (uint iConf=0;iConf<kConf.size();iConf++) {
     for (uint iDet=0;iDet<kDet.size();iDet++) {

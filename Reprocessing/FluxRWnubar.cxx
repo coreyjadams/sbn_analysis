@@ -19,9 +19,8 @@ FluxRWnubar::FluxRWnubar()
   fBinSize=0.05; // using histograms with 50MeV bins
 
   // Get the path to the files using the larlight env variable:
-  std::string path = GetEnv("MAKE_TOP_DIR");
-
-  path.append("/UserDev/lar1Osc/");
+  std::string path = GetEnv("LARLITE_USERDEVDIR");
+  path.append("/sbn_analysis/Reprocessing/");
 
   //miniboone histogram file
   std::string mbhistfile= path;

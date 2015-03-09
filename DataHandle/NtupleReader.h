@@ -58,12 +58,13 @@ namespace sbn{
     // this function gets the nominal data
     // it also passes the breakdown of the data,
     // and the legend that accompanies it.
-    void readData(std::vector<float> &               output,
-                  std::vector<std::vector<float> > & nominalDataByType);
-    void readDataOsc(std::vector<std::vector<float> > & outputOsc);
+    void getData(std::vector<float> &               output,
+                 std::vector<std::vector<float> > & nominalDataByType);
+    void getDataOsc(std::vector<std::vector<float> > & outputOsc);
 
     // std::vector<float> GetCosmicsFromFile();
     // std::vector<float> GetDirtFromFile();
+
 
   private:
 
@@ -77,13 +78,16 @@ namespace sbn{
     // The following 4 worker functions are called by readData 
     // (or readDataOsc) and handle reading in from file 
     // or generating the new file.
-    void Loop(std::vector<float> &               output,
-              std::vector<std::vector<float> > & nominalDataByType);
-    void LoopOsc(std::vector<std::vector<float> > & outputOsc);
+    void LoopData(std::vector<float> &               output,
+                  std::vector<std::vector<float> > & nominalDataByType);
+    void LoopDataOsc(std::vector<std::vector<float> > & outputOsc);
 
-    void Read(std::vector<float> &               output,
-              std::vector<std::vector<float> > & nominalDataByType);
-    void ReadOsc(std::vector<std::vector<float> > & outputOsc);    
+    void ReadData(std::vector<float> &               output,
+                  std::vector<std::vector<float> > & nominalDataByType);
+    void ReadDataOsc(std::vector<std::vector<float> > & outputOsc);    
+
+    void loadBar(int x, int n, int r, int w);
+
 
     // This struct holds all the file specifiy information 
     readConfig config;

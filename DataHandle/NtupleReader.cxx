@@ -2,6 +2,7 @@
 #define NTUPLEREADER_CXX
 
 #include "NtupleReader.h"
+#include "TMath.h"
 
 namespace sbn {
 
@@ -23,12 +24,12 @@ namespace sbn {
         int timediff = attrib.st_mtime;
         stat(sourceFile, &attrib);
         timediff -= attrib.st_mtime;
-        if (timediff > 0) {
-          std::cout << "\tFile " << testFile << " is up to date." << std::endl;
+        if (timediff < 0) {
+          // std::cout << "\tFile " << testFile << " is up to date." << std::endl;
           return true;
         }
         else {
-          std::cout << "\tFile" << testFile << " is not up to date." << std::endl;
+          // std::cout << "\tFile" << testFile << " is not up to date." << std::endl;
           return false;
         }
       }
@@ -138,12 +139,11 @@ namespace sbn {
 
     // Check if these source files exist:
     absPath = config.path;
-    absPath += fileNameHists;
-    if ( ! UpToDate( (absPath + fileNameSource).Data(),
+    if (  UpToDate( (absPath + fileNameSource).Data(),
                      (absPath + fileNameHists ).Data() ) 
         || config.forceRemake )
     {
-      std::cout << absPath << " not up to date.\n" << std::endl;
+      // std::cout << fileNameHists << " not up to date.\n" << std::endl;
       remakeHist = true;
     }
     else{
@@ -151,18 +151,34 @@ namespace sbn {
     }
     if (config.includeOsc){
       absPath = config.path;
-      absPath += fileNameHistsOsc;
-      if ( ! UpToDate( (absPath + fileNameSourceOsc).Data(),
+      if ( UpToDate( (absPath + fileNameSourceOsc).Data(),
                        (absPath + fileNameHistsOsc ).Data() ) 
           || config.forceRemake )
       {
-        std::cout << absPath << " not up to date.\n" << std::endl;
+        // std::cout << fileNameHistsOsc << " not up to date.\n" << std::endl;
         remakeHistOsc = true;
       }
       else{
         remakeHistOsc = false;
       }
     }
+
+    // // For debugging, printing out stuff:
+    // std::cout << std::endl;
+    // std::cout << "fileNameSource " << fileNameSource << std::endl;
+    // std::cout << "fileNameSourceOsc " << fileNameSourceOsc << std::endl;
+    // std::cout << "fileNameHists " << fileNameHists << std::endl;
+    // std::cout << "fileNameHistsOsc " << fileNameHistsOsc << std::endl;
+
+    // std::cout << "\n\n\nUp to date information: \n";
+    // std::cout << fileNameHists << " is ";
+    // if ( UpToDate((absPath + fileNameHists).Data(),
+    //               (absPath + fileNameSource).Data() )){
+    //   std::cout << "up to date compared to " << fileNameSource << "\n";
+    // }
+    // else{ 
+    //   std::cout << "NOT up to date compared to " << fileNameSource << "\n";
+    // }
 
     return true;
   }
@@ -182,10 +198,11 @@ namespace sbn {
     bool result = buildFileNames();
     if (! result ) return result;
 
+
     return result;
   }
 
-  void NtupleReader::readData(std::vector<float> &               output,
+  void NtupleReader::getData(std::vector<float> &               output,
                               std::vector<std::vector<float> > & nominalDataByType)
   {
 
@@ -206,27 +223,27 @@ namespace sbn {
     for (auto & vec : nominalDataByType) vec.resize(defaultBins.size()-1);
 
 
-    if (remakeHist) Loop(output, nominalDataByType);
-    else  Read(output, nominalDataByType);
+    if (remakeHist) LoopData(output, nominalDataByType);
+    else  ReadData(output, nominalDataByType);
 
     return;
 
   }
-  void NtupleReader::readDataOsc(std::vector<std::vector<float> > & outputOsc)
+
+  void NtupleReader::getDataOsc(std::vector<std::vector<float> > & outputOsc)
   {
     //resize and prepare the vector:
-    outputOsc.resize(config.npoints);
+    outputOsc.resize(config.npoints+1);
     for (auto & vec : outputOsc) vec.resize(defaultBins.size()-1);
-    if (remakeHistOsc) LoopOsc(outputOsc);
-    else  ReadOsc(outputOsc);
+    if (remakeHistOsc) LoopDataOsc(outputOsc);
+    else  ReadDataOsc(outputOsc);
     return;
   }
 
-  void NtupleReader::Loop(std::vector<float> &               output,
+  void NtupleReader::LoopData(std::vector<float> &               output,
                           std::vector<std::vector<float> > & nominalDataByType){
 
     // This is the loop function, which is the heart of the class.
-
     TString dummytarget = config.path+fileNameSource;
     TChain *c = new TChain("EventsTot");
     TChain *d = new TChain("EventsTot");
@@ -283,6 +300,10 @@ namespace sbn {
         break;
       case kCaloNoNeutrals:
         c->SetBranchAddress("Ecalo2", &fill_energy);
+        break;
+      case kNEnergy:
+        break;
+      default:
         break;
     }
 
@@ -343,7 +364,6 @@ namespace sbn {
       histosByType[i] = new TH1F(nameHolder,nameHolder,nbins, &(defaultBins[0]));
     }
 
-    std::cout << "histosByType.size() " << histosByType.size() << std::endl;
 
     // Transform histograms into vectors to save to file and report back
 ///MW
@@ -354,6 +374,10 @@ namespace sbn {
     
     // Now the histograms are set up and ready to go.
     // Loop over the ntuple:
+    std::cout << "Creating nominal histograms for " << signalMap[config.signal]
+              << " at L = " << baselMap[config.basel] << " in "
+              << modeMap[config.mode] << " mode with energy "
+              << energyMap[config.energy] << ": " << std::endl;
     for (ievt=0; ievt<nentries1; ievt++)
     {
       ientry = d->LoadTree(ievt); if (ientry < 0) break; nb = d->GetEntry(ievt);
@@ -367,13 +391,11 @@ namespace sbn {
       //   std::cout << "  mutliweight.size(): " << MultiWeight -> size() << std::endl;
       //   std::cout << "  mutliweight[0].size(): " << (*MultiWeight)[0].size()<< std::endl;
       // }
-      if ( (ievt%100000) == 0) {
-        std::cout << "On event " << ievt << " of " << nentries1 << std::endl;
-      }
+      // if ( (ievt%100000) == 0) {
+      //   std::cout << "On event " << ievt << " of " << nentries1 << std::endl;
+      // }
+      loadBar(ievt,nentries1,20000,30);
 
-      // This is a temporary fix, I think.
-      // ibkg is off by one wrt this accounting:
-      ibkg --;
 
       // here, do a check on the signal to see which route to take:
       if (config.signal == kNue){
@@ -442,6 +464,7 @@ namespace sbn {
       }
 
     } //end of loop
+    std::cout << "DONE." << std::endl;
 
     // Get the cosmic and dirt stuff:
     // 
@@ -528,16 +551,303 @@ namespace sbn {
 
 
   }
-  void NtupleReader::LoopOsc(std::vector<std::vector<float> > & outputOsc){
+  void NtupleReader::LoopDataOsc(std::vector<std::vector<float> > & outputOsc){
+    
+// This is the loop function, which is the heart of the class.
+    TString dummytarget = config.path+fileNameSource;
+    TChain *c = new TChain("EventsTot");
+    TChain *d = new TChain("EventsTot");
+    double fill_energy,true_energy,Elep,wgt,nuleng;
+    double checking_wgt;
+    int inno,isCC,mode, ibkg;
+    double ShowerContainedDist;
+    double ShowerDistToStart;
+    double showerGap;
+    double vertexEnergy;
+    int nuchan;
+
+
+    int nbytes = 0,nb = 0;
+    int ievt,ientry;
+
+    c->Reset();
+    c->Add(dummytarget);
+    if (c==0) exit(5);
+    
+    d->Reset();
+    d->Add(dummytarget);
+    if (d==0) exit(5);
+    
+
+    const int nentries1 = int(c->GetEntries());
+
+    // std::cout<<"Input filename:\t" << dummytarget << std::endl;
+    std::cout << "Number of entries at L= " << baselMap[config.basel] << ":\t" << nentries1 << std::endl;
+    c->SetBranchAddress("enugen",&true_energy);
+    c->SetBranchAddress("inno",&inno);
+    c->SetBranchAddress("nuchan", &nuchan);         // NUANCE interaction codes
+    c->SetBranchAddress("mode",&mode);
+    c->SetBranchAddress("isCC",&isCC);
+    c->SetBranchAddress("wgt",&wgt);
+    c->SetBranchAddress("ibkg",&ibkg);
+    c->SetBranchAddress("ShowerContainedDistance",&ShowerContainedDist);
+    c->SetBranchAddress("ShowerDistanceToStart"  ,&ShowerDistToStart);
+    c->SetBranchAddress("VertexEnergy"  ,&vertexEnergy);
+    c->SetBranchAddress("showerGap"  ,&showerGap);
+    c->SetBranchAddress("LepE", &Elep);
+    c->SetBranchAddress("nuleng",&nuleng);
+    switch (config.energy){
+      case kElep:
+        c->SetBranchAddress("LepE", &fill_energy);
+        break;
+      case kTrue:
+        c->SetBranchAddress("enugen",&fill_energy);
+        break;
+      case kCCQE:
+        c->SetBranchAddress("Eccqe", &fill_energy);
+        break;
+      case kCaloWithNeutrals:
+        c->SetBranchAddress("Ecalo1", &fill_energy);
+        break;
+      case kCaloNoNeutrals:
+        c->SetBranchAddress("Ecalo2", &fill_energy);
+        break;
+      case kNEnergy:
+        break;
+      default:
+        break; 
+    }
+
+    d->SetBranchAddress("wgt",&checking_wgt);
+
+    c->Reset();
+    c->Add(dummytarget);
+    if (c==0) return;
+    
+    d->Reset();
+    d->Add(dummytarget);
+    if (d==0) return;
+    
+    const Int_t nentries2 = Int_t(c->GetEntries());
+    
+    // The histogram used for binning:
+    std::vector<TH1F *> eventsOsc;
+    eventsOsc.resize(config.npoints+1);
+    std::vector<float> dm2Array;
+    dm2Array.resize(config.npoints+1);
+    //Fill the array of dm2 points:
+
+    char nameHolder[100];
+    int nbins=defaultBins.size()-1;
+
+    for (int i=0; i<=config.npoints; i++)  //loop over dm2 points
+    {
+      dm2Array[i] = pow(10., ( TMath::Log10(config.dm2min)  
+                             + (i*1./config.npoints)
+                             * TMath::Log10(config.dm2max/config.dm2min)) );
+      sprintf(nameHolder,"oscllatedEvents%s_%s_%d",
+                          signalMap[config.signal].c_str(),
+                          baselMap[config.basel].c_str(),
+                          i);
+      //While looping, set up the histograms:
+      eventsOsc[i] 
+        = new TH1F(nameHolder,"Oscillated event distribution no dm2,",
+                   nbins, &(defaultBins[0]));
+    }
+
+    std::cout << "Creating oscillated histograms for " << signalMap[config.signal]
+              << " at L = " << baselMap[config.basel] << " in "
+              << modeMap[config.mode] << " mode with energy "
+              << energyMap[config.energy] << ": " << std::endl;
+    for (ievt=0; ievt<nentries2; ievt++)
+    {
+      // if ( (ievt%100000) == 0) {
+      //   std::cout << "On event " << ievt << " of " << nentries2 << std::endl;
+      // }
+      loadBar(ievt, nentries2, 20000, 30);
+
+
+      ientry = d->LoadTree(ievt); if (ientry < 0) break; nb = d->GetEntry(ievt);
+      if (checking_wgt == 0){
+        // std::cout << "Skipping this event because the weight is zero." << std::endl;
+        continue;
+      }
+
+      ientry = c->LoadTree(ievt); if (ientry < 0) break; nb = c->GetEntry(ievt); nbytes += nb;
+
+
+
+
+      if (config.signal == kNue){
+        if (config.energy == kCCQE && nuchan != 1){
+          if (inno == 12 || inno == -12)
+            continue;
+        }
+
+
+
+
+        if (Elep < 0.200) continue;
+
+        if(ShowerContainedDist < config.showerContainmentDist){
+          // std::cout << "Skipping this fosc event in the containment cut.\n";
+          continue;
+        }
+        if(ShowerDistToStart < config.minDistanceToStart){
+          continue;
+        }
+        if (vertexEnergy < config.minVertexEnergySignal){
+          continue;
+        }
+      }
+      // if (config.signal == kNumu){
+
+      // }
+
+      //Need to loop over dm2 points...
+      for (int i=0; i<=config.npoints; i++){
+        double weight=wgt*pow((TMath::Sin(1.27*dm2Array[i]*(nuleng/100.)/(true_energy*1000.))),2);
+        eventsOsc[i]->Fill(fill_energy,weight);
+      }
+
+    }//end loop over events
+
+    // Convert to vector, store in tree:
+    // std::vector<std::vector<float> > edistrOscVec(config.npoints+1, std::vector<float>(nbins,0) );
+
+    for (int point =0; point <= config.npoints; point ++){
+      for (int i = 0; i < nbins; i++){
+        outputOsc[point][i] = eventsOsc[point]  -> GetBinContent(i+1);
+      }
+    }
+
+//write to file...
+    TString fileLoc = config.path + fileNameHistsOsc;
+    TFile f(fileLoc, "RECREATE");
+
+    TTree *t1 = new TTree("tvecosc", "Tree with oscillation signals");
+    for (int point = 0; point <= config.npoints; point ++){
+      char  name[100];
+      sprintf(name, "edistrOscVec_%i",point);
+      t1 -> Branch(name, &(outputOsc[point]));
+      eventsOsc[point] -> Write();
+    }
+
+    t1 -> Fill();
+    t1 -> Write();
+
+    // std::cout << "Successfully wrote histograms to file." << std::endl;
+    
+    f.Close();
+
     return;
   }
   
-  void NtupleReader::Read(std::vector<float> &               output,
+  void NtupleReader::ReadData(std::vector<float> &               output,
                           std::vector<std::vector<float> > & nominalDataByType){
+    
+    TChain *c = new TChain("tvec");
+    c -> Add(config.path+fileNameHists);
+    std::vector<float> * readInVector = 0;
+    std::vector<std::vector<float>*> readInByType;
+    readInByType.resize(nominalDataByType.size());
+///MW
+    // std::vector<std::vector<float> * > multiWeightReadInVector;
+    // if (usingMultiWeights) multiWeightReadInVector.resize(nWeights);
+    c->SetBranchAddress("nominalOutputVec",&readInVector);
+///MW
+    // if (usingMultiWeights){
+    //   for (int N_weight = 0; N_weight < nWeights; ++N_weight)
+    //   {
+    //     multiWeightReadInVector[N_weight] = 0;
+    //     char  name[100];
+    //     sprintf(name, "edistrnueMultiWeightVec_%i",N_weight);
+    //     c->SetBranchAddress(name,&(multiWeightReadInVector[N_weight]));
+    //   }
+    // }
+    // std::cout << "Reading in nue data, this may take a minute or two...." << std::endl;
+    const std::vector<std::string> * ptrToTypeMap;
+    switch (config.signal){
+      case kNue:
+        ptrToTypeMap = &(nueMap);
+        break;
+      case kNumu:
+        ptrToTypeMap = &(numuMap);
+        break;
+      default:
+        ptrToTypeMap = new std::vector<std::string>(0);
+    }
+    for (unsigned int i = 0; i < ptrToTypeMap->size(); i ++){
+      readInByType[i] = 0;
+      char tempName[100];
+      sprintf(tempName,"%sVec",(*ptrToTypeMap).at(i).c_str());
+      c -> SetBranchAddress(tempName,&readInByType[i]);
+    }
+
+    c-> GetEntry(0);
+    for (unsigned int i = 0; i < ptrToTypeMap->size(); i ++){
+      nominalDataByType[i] = (*readInByType[i]);
+      delete readInByType[i];
+    }
+    output = *(readInVector);
+
+///MW
+    // if (usingMultiWeights){
+    //   for (int N_weight = 0; N_weight < nWeights; ++N_weight)
+    //   {
+    //     multiWeightData[N_weight] = *(multiWeightReadInVector[N_weight]);
+    //     delete multiWeightReadInVector[N_weight];
+    //   }
+    // }
+    delete readInVector;
+    delete c;
     return;
   }
-  void NtupleReader::ReadOsc(std::vector<std::vector<float> > & outputOsc){
+  void NtupleReader::ReadDataOsc(std::vector<std::vector<float> > & outputOsc){
+      
+    TChain *c = new TChain("tvecosc");
+    c -> Add(config.path+fileNameHistsOsc);
+    std::vector<std::vector<float> * > readInOscVec;
+    readInOscVec.resize(outputOsc.size());
+    for (unsigned int i = 0; i < outputOsc.size(); i ++){
+      readInOscVec[i] = 0;
+      char tempName[100];
+      sprintf(tempName,"edistrOscVec_%i",i);
+      c -> SetBranchAddress(tempName,&readInOscVec[i]);
+    }
+    c -> GetEntry(0);
+    for (unsigned int i = 0; i < outputOsc.size(); i ++){
+      outputOsc[i] = *readInOscVec[i];
+      delete readInOscVec[i];
+    }    
+
     return;
+  }
+
+  // Process has done i out of n rounds,
+  // and we want a bar of width w and resolution r.
+  void NtupleReader::loadBar(int x, int n, int r, int w)
+  {
+      // Only update r times.
+      if ( x % (n/r +1) != 0 ) return;
+   
+      // Calculuate the ratio of complete-to-incomplete.
+      float ratio = x/(float)n;
+      int   c     = ratio * w;
+   
+      // Show the percentage complete.
+      printf("%3d%% [", (int)(ratio*100) );
+   
+      // Show the load bar.
+      for (int x=0; x<c; x++)
+         printf("=");
+   
+      for (int x=c; x<w; x++)
+         printf(" ");
+   
+      // ANSI Control codes to go back to the
+      // previous line and clear it.
+      printf("]\n\033[F\033[J");
   }
 
 } // sbn
