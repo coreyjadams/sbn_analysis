@@ -16,8 +16,10 @@
 #pragma link C++ class sbn::SampleUtils+;
 #pragma link C++ class sbn::DetUtils+;
 #pragma link C++ class sbn::DataHandle+;
+#pragma link C++ class sbn::DataUtils+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 
 

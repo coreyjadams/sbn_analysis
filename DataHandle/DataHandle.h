@@ -19,6 +19,8 @@
 #include <vector>
 #include <map>
 #include "Detector.h"
+#include "DataUtils.h"
+
 /**
    \class DataHandle
    This class is the main interface class for accessing the data.
@@ -55,12 +57,14 @@ public:
   ~DataHandle(){}
 
   void addSignal(int signal);
+  void addSample(int sample){addSignal(sample);}  // Used interchangabely, made both
   void addDetector(int baseline);
   void setEnergy(int energy);
   void setMode(int mode);
   
-  bool init(); //uses private readConfig member as default
+  bool init();
   bool read();
+
 
   // This function returns a reference to one of the Detector.h objects.
   // Useful if you just want that detector's rates
@@ -72,7 +76,31 @@ public:
   // For just one detector (combined or signal sample) go through
   // the getDetector function and the subsequent member functions
   // from Detector.h
-  const std::vector<float> getData();
+  const std::vector<float> & getData();
+  void getOscData(std::vector<float> & oscData, 
+                  const std::vector<float> & sin22th, float dm2);
+  void getOscData(std::vector<float> & oscData, 
+                  const std::vector<int> & sin22th_point, int dm2_point);
+
+  // These functions allow you to get the combined data of specified signals
+  // They're overloaded to accept a vector or just a single int to specify the signal
+  std::vector<float> getData(const std::vector<int> & signals);
+  void getOscData(std::vector<float> & oscData, const std::vector<float> & sin22th, 
+                  float dm2, const std::vector<int> & signals);
+  void getOscData(std::vector<float> & oscData, std::vector<int> sin22th_point, 
+                  int dm2_point, const std::vector<int> & signals);
+  // The overloaded versions:
+  std::vector<float> getData(int signal);
+  void getOscData(std::vector<float> & oscData, 
+                  float sin22th, 
+                  float dm2, int signal);
+  void getOscData(std::vector<float> & oscData, 
+                  int sin22th_point, 
+                  int dm2_point, int signal);
+
+  inline readConfig & config(){return _config;}
+
+  void setBins(int signal, const std::vector<float> & bins);
 
 private:
 
@@ -82,7 +110,11 @@ private:
   // this variable caches the combined data:
   std::vector<float> combinedData;
 
-  readConfig config;
+  // Utils class
+  DataUtils utils;
+
+  // protected:
+  readConfig _config;
 
 };
 } // sbn

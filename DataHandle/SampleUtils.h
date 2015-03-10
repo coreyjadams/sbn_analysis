@@ -38,21 +38,11 @@ class SampleUtils{
     /// Default destructor
     ~SampleUtils(){}
 
-    TH1F* AppendHistograms(TH1F * hist1, TH1F* hist2, TH1F* hist3);
-    TH1F* AppendHistograms(TH1F * hist1, TH1F* hist2);
-
-    std::vector<std::vector<float> > CollapseMatrix(
-                              std::vector<std::vector<float> > entries,
-                              int nbins_nue, int nbins_numu, int nL);
-    TMatrix CollapseMatrix(TMatrix entries,
-                              int nbins_nue, int nbins_numu, int nL);
-
-    bool fileExists(const char *filename);
+    // Worker Function, verifies that a file exists 
+    bool fileExists(const char *filename) const;
 
     std::vector<float> rebinVector(std::vector<float> inputVector,
                                    std::vector<float> bins);
-    // std::vector<float> rebinVector(std::vector<float> & inputVector,
-                                   // std::string binSchemeName);
 
     float dm2IndexToValue(int dm2Index, const readConfig & r);  
     float sin22thIndexToValue(int sin22thIndex, const readConfig & r);  

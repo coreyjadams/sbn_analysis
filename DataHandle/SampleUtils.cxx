@@ -16,6 +16,11 @@ SampleUtils::SampleUtils(){
     
 }
 
+bool SampleUtils::fileExists(const char *filename) const{
+  std::ifstream ifile(filename);
+  return ifile.is_open();
+}
+
 std::vector<float> SampleUtils::rebinVector(std::vector<float> inputVector,
                                             std::vector<float> bins)
   {

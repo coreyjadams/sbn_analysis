@@ -31,20 +31,21 @@ namespace sbn{
 
   bool EventSample::read(){
     reader.getData(nominalData_unbinned, nominalDataByType_unbinned);
-    reader.getDataOsc(oscData_unbinned);
-    // Now bin the data 
+    if (config.includeOsc) 
+      reader.getDataOsc(oscData_unbinned);
+    
 
-
+    // Now bin the data
     nominalData = utils.rebinVector(nominalData_unbinned, activeBins);
    
     nominalDataByType.resize(nominalDataByType_unbinned.size());
     for (unsigned int i = 0; i < nominalDataByType_unbinned.size(); i++)
       nominalDataByType[i] = utils.rebinVector(nominalDataByType_unbinned[i], activeBins);
-   
-    oscData.resize(oscData_unbinned.size());
-    for (unsigned int i = 0; i < oscData_unbinned.size(); i++)
-      oscData[i] = utils.rebinVector(oscData_unbinned[i], activeBins);
-
+    if (config.includeOsc){
+      oscData.resize(oscData_unbinned.size());
+      for (unsigned int i = 0; i < oscData_unbinned.size(); i++)
+        oscData[i] = utils.rebinVector(oscData_unbinned[i], activeBins);
+    }
     return true;
   }
 

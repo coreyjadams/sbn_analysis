@@ -14,15 +14,27 @@ namespace sbn {
     return;
   }
 
-  void Detector::addSample(int sample){
-    samples[sample] = EventSample(config, sample);
+  Detector::~Detector(){
+    for (auto it = samples.begin(); it != samples.end(); it++)
+      delete it -> second;
   }
 
+  void Detector::addSample(int sample){
+    samples[sample] = new EventSample(config, sample);
+  }
+
+  bool Detector::hasSample(int sample){
+    if (samples.find(sample) == samples.end()) {
+      return false;
+    }
+    std::cout << "Determined that " << sample << " is present.\n\n\n\n\n";
+    return true;
+  }
 
   bool Detector::init(){
     bool result = true;
     for (auto event : samples){
-      result = (result && event.second.init());
+      result = (result && event.second->init());
     }
     return result;
   }
@@ -31,14 +43,14 @@ namespace sbn {
   bool Detector::read(){
     bool result = true;
     for (auto event : samples){
-      result = (result && event.second.read());
+      result = (result && event.second->read());
     }
     return result;
 
     // At the end of reading, make sure the combined bins are filled:
     if (binsCombined.size() != 0) binsCombined.clear();
     for (auto & es : samples)
-      utils.appendVector(binsCombined, es.second.getBins()); 
+      utils.appendVector(binsCombined, es.second->getBins()); 
   }
 
 
@@ -47,7 +59,7 @@ namespace sbn {
     if (dataCombined.size() != 0) return dataCombined;
     else{
       for (auto & es : samples)
-        utils.appendVector(dataCombined,es.second.getData());
+        utils.appendVector(dataCombined,es.second->getData());
     }
     return dataCombined;
   }
@@ -69,7 +81,7 @@ namespace sbn {
     // Now fill in the data:
     unsigned int i = 0;
     for(auto & es : samples){
-      utils.appendVector(dataOsc, es.second.getDataOsc(sin22th[i], dm2));
+      utils.appendVector(dataOsc, es.second->getDataOsc(sin22th[i], dm2));
       i++;
     }
     return;
@@ -92,7 +104,7 @@ namespace sbn {
     // Now fill in the data:
     unsigned int i = 0;
     for(auto & es : samples){
-      utils.appendVector(dataOsc, es.second.getDataOsc(sin22th_points[i], dm2_point));
+      utils.appendVector(dataOsc, es.second->getDataOsc(sin22th_points[i], dm2_point));
       i++;
     }
     return;
@@ -102,7 +114,7 @@ namespace sbn {
     if (binsCombined.size() != 0) return binsCombined;
     else{
       for (auto & es : samples){
-        utils.appendVector(binsCombined, es.second.getBins());
+        utils.appendVector(binsCombined, es.second->getBins());
       }
     }
     return binsCombined;
@@ -111,25 +123,29 @@ namespace sbn {
   // Return the uncombined samples of data:
   // These just go through the appropriate EventSample object
   std::vector<float> const &  Detector::getSampleData(int sample){
-    return samples[sample].getData();
+    return samples[sample]->getData();
   }
 
   //The osc data, returns the closest match in sin22th, dm2 space
   std::vector<float> Detector::getSampleDataOsc(int sample, 
                                                 float sin22th, 
                                                 float dm2){
-    return samples[sample].getDataOsc(sin22th, dm2);
+    return samples[sample]->getDataOsc(sin22th, dm2);
   }
 
   //The osc data, returns the point of each as requested
   std::vector<float> Detector::getSampleDataOsc(int sample,
                                                 int sin22th_point, 
                                                 int dm2_point){
-    return samples[sample].getDataOsc(sin22th_point, dm2_point);
+    return samples[sample]->getDataOsc(sin22th_point, dm2_point);
   }
 
   std::vector<float> const &  Detector::getSampleBins(int sample){
-      return samples[sample].getBins();
+      return samples[sample]->getBins();
+  }
+
+  void Detector::setBins(int sample, const std::vector<float> & bins){
+    samples[sample] -> setBins(bins);
   }
 
 

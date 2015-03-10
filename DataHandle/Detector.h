@@ -35,10 +35,11 @@ namespace sbn {
     Detector(){}
     Detector(readConfig r, int basel);
 
-    /// Default destructor
-    ~Detector(){}
+    // destructor
+    ~Detector();
 
     void addSample(int sample);
+    bool hasSample(int sample);
 
     // Work flow functions:
     bool init(); // uses private config as default
@@ -73,13 +74,14 @@ namespace sbn {
 
     std::vector<float> const &  getSampleBins(int sample);
 
+    void setBins(int signal, const std::vector<float> & bins);
 
   private:
 
     DetUtils utils;
 
     // each Detector gets a container of signals
-    std::map<int, EventSample> samples;
+    std::map<int, EventSample*> samples;
     //not default bins, but the specific, combined bins of all signals
     std::map<int, std::vector<float> > bins;
 

@@ -12,7 +12,7 @@ namespace sbn{
   enum MODE     {kNu, kNubar,kNMode};
   enum NUEBKG   {kNueFromNueCC_muon, kNueFromNueCC_chargeKaon,
                  kNueFromNueCC_neutKaon, kNueFromEScatter, kNueFromNC_pi0,
-                 kNueFromNC_delta0, kNueFromNumuCC, kDirt, kOther,kNnuebkg};
+                 kNueFromNC_delta0, kNueFromNumuCC, kDirt, kCosmics, kOther,kNnuebkg};
   enum NUMUBKG  {kNumuIntrinsic, kNumuFromPi, kNnumubkg};
   enum OTHBKG   {kNothbkg};
 
@@ -24,11 +24,23 @@ namespace sbn{
   const std::vector<std::string> nueMap    {"NueFromNueCC_muon", "NueFromNueCC_chargeKaon",
                                             "NueFromNueCC_neutKaon", "NueFromEScatter", 
                                             "NueFromNC_pi0", "NueFromNC_delta0", 
-                                            "NueFromNumuCC", "Dirt", "Other"};
+                                            "NueFromNumuCC", "Dirt", "Cosmics", "Other"};
   const std::vector<std::string> numuMap   {"NumuIntrinsic", "NumuFromPi"};
 
-  const std::vector<float> nueBins {0.200,0.350,0.500,0.650,0.800,0.950,
-                                    1.100,1.300,1.500,1.750,2.000,3.000};
+
+
+
+
+
+
+  const std::vector<float> nueBins  { 0.200,0.350,0.500,0.650,0.800,0.950,
+                                      1.100,1.300,1.500,1.750,2.000,3.000};
+
+  const std::vector<float> numuBins { .200, .300, .400, .450, .500, .550,
+                                      .600, .650, .700, .750, .800, .850,
+                                      .900, .950, 1.000, 1.250, 1.500, 
+                                      2.000, 2.500, 3.000};
+
 
   // const std::vector<std::string> multwMap  {"flux", "xsec"};
 

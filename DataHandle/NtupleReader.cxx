@@ -11,14 +11,9 @@ namespace sbn {
     return;
   }
 
-  bool NtupleReader::fileExists(const char *filename) const{
-    std::ifstream ifile(filename);
-    return ifile.is_open();
-  }
-
   bool NtupleReader::UpToDate(const char * sourceFile, const char * testFile) const{
-    if (fileExists(sourceFile)){
-      if (fileExists(testFile)){
+    if (utils.fileExists(sourceFile)){
+      if (utils.fileExists(testFile)){
         struct stat attrib;
         stat(testFile, &attrib);
         int timediff = attrib.st_mtime;
@@ -61,14 +56,14 @@ namespace sbn {
     TString absPath = config.path;
     absPath += fileNameSource;
     // Verify these source files exist:
-    if ( !fileExists(absPath.Data() ) ){
+    if ( !utils.fileExists(absPath.Data() ) ){
       std::cout << absPath << " does not exist.\n" << std::endl;
       return false;
     }
     if (config.includeOsc){
       absPath = config.path;
       absPath += fileNameSourceOsc;
-      if (! fileExists(absPath.Data() ) ){
+      if (! utils.fileExists(absPath.Data() ) ){
         std::cout << absPath << " does not exist.\n" << std::endl;
         return false;
       }
@@ -139,27 +134,40 @@ namespace sbn {
 
     // Check if these source files exist:
     absPath = config.path;
-    if (  UpToDate( (absPath + fileNameSource).Data(),
-                     (absPath + fileNameHists ).Data() ) 
-        || config.forceRemake )
-    {
-      // std::cout << fileNameHists << " not up to date.\n" << std::endl;
-      remakeHist = true;
-    }
-    else{
-      remakeHist = false;
-    }
-    if (config.includeOsc){
-      absPath = config.path;
-      if ( UpToDate( (absPath + fileNameSourceOsc).Data(),
-                       (absPath + fileNameHistsOsc ).Data() ) 
+    if ( utils.fileExists(absPath + fileNameHists) ){
+      if (  UpToDate( (absPath + fileNameSource).Data(),
+                       (absPath + fileNameHists ).Data() ) 
           || config.forceRemake )
       {
-        // std::cout << fileNameHistsOsc << " not up to date.\n" << std::endl;
-        remakeHistOsc = true;
+        // std::cout << fileNameHists << " not up to date.\n" << std::endl;
+        remakeHist = true;
       }
       else{
-        remakeHistOsc = false;
+        remakeHist = false;
+      }
+    }
+    else{
+      std::cout << "Message: File " << absPath+fileNameHists << " does not exist, remaking.\n";
+      remakeHist = true;
+    }
+
+    if (config.includeOsc){
+      if ( utils.fileExists(absPath + fileNameHistsOsc) ){
+        absPath = config.path;
+        if ( UpToDate( (absPath + fileNameSourceOsc).Data(),
+                         (absPath + fileNameHistsOsc ).Data() ) 
+            || config.forceRemake )
+        {
+          // std::cout << fileNameHistsOsc << " not up to date.\n" << std::endl;
+          remakeHistOsc = true;
+        }
+        else{
+          remakeHistOsc = false;
+        }
+      }
+      else{
+        std::cout << "Message: File " << absPath+fileNameHists << " does not exist, remaking.\n";
+        remakeHistOsc = true;
       }
     }
 
@@ -460,7 +468,9 @@ namespace sbn {
 
       }
       else if (config.signal == kNumu){
-
+        nominalHisto->Fill(fill_energy,wgt);
+        histosByType[ibkg] -> Fill(fill_energy,wgt);
+        if (inno == 14 || inno == -14) MCStatsHisto->Fill(fill_energy);
       }
 
     } //end of loop

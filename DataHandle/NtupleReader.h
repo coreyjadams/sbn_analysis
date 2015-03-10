@@ -24,6 +24,7 @@
 
 // sbs_analysis includes
 #include "basedata.h"
+#include "SampleUtils.h"
 
 // root includes
 #include "TString.h"
@@ -68,8 +69,7 @@ namespace sbn{
 
   private:
 
-    // Worker Function, verifies that a file exists 
-    bool fileExists(const  char *filename) const;
+
     // Worker Function returns true if arg1 (a file) is newer than arg2 (also a file)
     bool UpToDate(const char *, const char *) const;
     // Worker function populates the fileName* variables, checks they exist
@@ -91,6 +91,8 @@ namespace sbn{
 
     // This struct holds all the file specifiy information 
     readConfig config;
+
+    SampleUtils utils;
 
     // the bins things are read in as - rebinning happens upstreams
     std::vector<float> defaultBins;  

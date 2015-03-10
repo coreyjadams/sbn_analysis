@@ -35,31 +35,7 @@ namespace sbn{
   public:
 
     /// Default constructor
-    EventSample(){
-    // This is purely for testing, to be removed once upstream
-    // setup is working
-    config.signal                = kNue;
-    config.path                  = "/media/cadams/data_linux/testFramework/";
-    config.basel                 = kNearDet;
-    config.mode                  = kNu;
-    config.energy                = kCaloNoNeutrals;
-    config.npoints               = 500;
-    config.forceRemake           = false;
-    config.includeOsc            = true;
-    config.multiWeightSource     = 0;
-    config.usingMultiWeights     = false;
-    config.absolute_MWSource     = false;
-    config.nWeights              = 250;
-    // config.includeCosmics        = r.includeCosmics;
-    // config.includeDirt           = r.includeDirt;
-    config.showerContainmentDist = -999;
-    config.minDistanceToStart    = -999;
-    config.minVertexEnergySignal = 0;
-    config.minVertexEnergyPhoton = 0.05;
-    config.minShowerGap          = 3.0;
-    this -> setBins(nueBins);
-    return;
-	}
+    // EventSample(){}
     EventSample(readConfig r, int signal);
 
     /// Default destructor

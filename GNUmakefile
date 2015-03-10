@@ -20,7 +20,7 @@ endif
 #
 # Define directories to be compile upon a global "make"...
 #
-SUBDIRS := DataHandle Reprocessing #ADD_NEW_SUBDIR ... do not remove this comment from this line
+SUBDIRS := DataHandle Reprocessing Analysis #ADD_NEW_SUBDIR ... do not remove this comment from this line
 
 #####################################################################################
 #
