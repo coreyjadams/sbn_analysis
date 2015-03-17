@@ -149,6 +149,24 @@ namespace sbn {
   }
 
 
+  std::vector<std::vector<float> > Detector::getSampleDataByType(int signal){
+    if (signal < 0 || signal >= kNSignal ){
+      std::cerr << "Error, the signal you requested (" << signal
+                << " == " << signalMap[signal] << ") is not an option.\n"
+                << "  See basedata.h for a list of available signals."
+                << std::endl;
+      exit(-1);
+    }
+    if (samples.find(signal) == samples.end()){
+      std::cerr << "Error, the sample you requested hasn't been configured\n";
+      exit(-1);
+    }
+    return samples[signal] -> getDataByType();
+
+  }
+
+
+
 } // sbn
 
 

@@ -46,8 +46,8 @@ class SampleUtils{
 
     float dm2IndexToValue(int dm2Index, const readConfig & r);  
     float sin22thIndexToValue(int sin22thIndex, const readConfig & r);  
-    unsigned int dm2ValueToIndex(int dm2, const readConfig & r);  
-    unsigned int sin22thValueToIndex(int sin22th, const readConfig & r);  
+    unsigned int dm2ValueToIndex(float dm2, const readConfig & r);  
+    unsigned int sin22thValueToIndex(float sin22th, const readConfig & r);  
 
   private:
     std::vector<float> default_bins;

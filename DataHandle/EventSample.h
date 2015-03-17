@@ -52,7 +52,7 @@ namespace sbn{
     //The osc data, returns the point of each as requested
     std::vector<float> getDataOsc(int sin22th_point, int dm2_point);
 
-    std::vector<std::vector<float>> const &  getDataByType();
+    std::vector<std::vector<float>> const & getDataByType() const;
 
     // Useful to be able to get the bins ...
     std::vector<float> const &  getBins() const;

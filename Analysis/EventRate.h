@@ -19,6 +19,9 @@
 #include "EventRateUtils.h"
 
 #include "TH1F.h"
+#include "THStack.h"
+#include "TCanvas.h"
+
 
 /**
    \class EventRate

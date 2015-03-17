@@ -95,11 +95,16 @@ std::vector<float> SampleUtils::rebinVector(std::vector<float> inputVector,
     return r.sin22thmin*pow(r.sin22thmax/r.sin22thmin,sin22thIndex/r.npoints);
 
   }  
-  unsigned int SampleUtils::dm2ValueToIndex(int dm2, const readConfig & r){
+  unsigned int SampleUtils::dm2ValueToIndex(float dm2, const readConfig & r){
+    std::cout << "Asking for dm2 index for " << dm2 << std::endl;
+    std::cout << "dm2max" << r.dm2max << std::endl;
+    std::cout << "dm2min" << r.dm2min << std::endl;
+    std::cout << "npoints" << r.npoints << std::endl;
     float val= r.npoints*(log(dm2/r.dm2min) / log(r.dm2max/r.dm2min));
+    std::cout << "Calculated val to be " << val << std::endl; 
     return (int) nearbyint(val);
   }
-  unsigned int SampleUtils::sin22thValueToIndex(int sin22th, const readConfig & r){
+  unsigned int SampleUtils::sin22thValueToIndex(float sin22th, const readConfig & r){
     float val = r.npoints*(log(sin22th/r.sin22thmin) / log(r.sin22thmax/r.sin22thmin));
     return (int) nearbyint(val);
   } 

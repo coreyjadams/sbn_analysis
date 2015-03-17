@@ -68,7 +68,7 @@ public:
 
   // This function returns a reference to one of the Detector.h objects.
   // Useful if you just want that detector's rates
-  const Detector & getDetector(int baseline);
+  Detector & getDetector(int baseline);
   //
 
   // These functions allow you to get the nominal or oscillated data
@@ -77,24 +77,25 @@ public:
   // the getDetector function and the subsequent member functions
   // from Detector.h
   const std::vector<float> & getData();
-  void getOscData(std::vector<float> & oscData, 
+  
+  void getOscDataByValue(std::vector<float> & oscData, 
                   const std::vector<float> & sin22th, float dm2);
-  void getOscData(std::vector<float> & oscData, 
+  void getOscDataByPoint(std::vector<float> & oscData, 
                   const std::vector<int> & sin22th_point, int dm2_point);
 
   // These functions allow you to get the combined data of specified signals
   // They're overloaded to accept a vector or just a single int to specify the signal
   std::vector<float> getData(const std::vector<int> & signals);
-  void getOscData(std::vector<float> & oscData, const std::vector<float> & sin22th, 
+  void getOscDataByValue(std::vector<float> & oscData, const std::vector<float> & sin22th, 
                   float dm2, const std::vector<int> & signals);
-  void getOscData(std::vector<float> & oscData, std::vector<int> sin22th_point, 
+  void getOscDataByPoint(std::vector<float> & oscData, std::vector<int> sin22th_point, 
                   int dm2_point, const std::vector<int> & signals);
   // The overloaded versions:
   std::vector<float> getData(int signal);
-  void getOscData(std::vector<float> & oscData, 
+  void getOscDataByValue(std::vector<float> & oscData, 
                   float sin22th, 
                   float dm2, int signal);
-  void getOscData(std::vector<float> & oscData, 
+  void getOscDataByPoint(std::vector<float> & oscData, 
                   int sin22th_point, 
                   int dm2_point, int signal);
 

@@ -81,7 +81,7 @@ namespace sbn {
     }
     return combinedData;
   }
-  const Detector & DataHandle::getDetector(int baseline){
+  Detector & DataHandle::getDetector(int baseline) {
     // Be sure that the requested detector exists before trying to return it
     // Otherwise, map will initialize it which will cause errors
     if (detMap.find(baseline) != detMap.end()){
@@ -110,8 +110,12 @@ namespace sbn {
     }
     return returnData;
   }
-  void DataHandle::getOscData(std::vector<float> & oscData, const std::vector<float> & sin22th, 
+  void DataHandle::getOscDataByValue(std::vector<float> & oscData, const std::vector<float> & sin22th, 
                   float dm2, const std::vector<int> & signals){
+    if (!_config.includeOsc){
+      std::cerr << "Error, can't get osc data because includeOsc is false.\n";
+      exit(-1);
+    }
     if (oscData.size() != 0) oscData.clear();
     // signals and sin22th had better be the same size!
     if (sin22th.size() != signals.size()){
@@ -124,13 +128,22 @@ namespace sbn {
           std::cerr << "Error: the signal you requested does not exist.\n";
           exit(-1);
         }
-        utils.appendVector(oscData, det.second.getSampleDataOsc(signals[i], sin22th[i], dm2) );
+        if (det.second.hasSample(signals[i]))
+          utils.appendVector(oscData, det.second.getSampleDataOsc(signals[i], sin22th[i], dm2) );
+        else{
+          std::cerr << "Warning, failed to get the osc data because that signal is not configured." << std::endl;
+          exit(-1);
+        }
       }
     }
   }
 
-  void DataHandle::getOscData(std::vector<float> & oscData, std::vector<int> sin22th_point, 
+  void DataHandle::getOscDataByPoint(std::vector<float> & oscData, std::vector<int> sin22th_point, 
                   int dm2_point, const std::vector<int> & signals){
+    if (!_config.includeOsc){
+      std::cerr << "Error, can't get osc data because includeOsc is false.\n";
+      exit(-1);
+    }
     if (oscData.size() != 0) oscData.clear();
     // signals and sin22th had better be the same size!
     if (sin22th_point.size() != signals.size()){
@@ -154,20 +167,28 @@ namespace sbn {
     std::vector<int> sig = {signal};
     return getData(sig);
   }
-  void DataHandle::getOscData(std::vector<float> & oscData, 
+  void DataHandle::getOscDataByValue(std::vector<float> & oscData, 
                               float sin22th, 
                               float dm2, int signal){
+    if (!_config.includeOsc){
+      std::cerr << "Error, can't get osc data because includeOsc is false.\n";
+      exit(-1);
+    }
     std::vector<int> sig = {signal};
     std::vector<float> sin22th_vec = {sin22th};
-    getOscData(oscData, sin22th_vec, dm2, sig);
+    getOscDataByValue(oscData, sin22th_vec, dm2, sig);
     return;
   }
-  void DataHandle::getOscData(std::vector<float> & oscData, 
+  void DataHandle::getOscDataByPoint(std::vector<float> & oscData, 
                               int sin22th_point, 
                               int dm2_point, int signal){
+    if (!_config.includeOsc){
+      std::cerr << "Error, can't get osc data because includeOsc is false.\n";
+      exit(-1);
+    }
     std::vector<int> sig = {signal};
     std::vector<int> sin22th_vec = {sin22th_point};
-    getOscData(oscData, sin22th_vec, dm2_point, sig);
+    getOscDataByPoint(oscData, sin22th_vec, dm2_point, sig);
     return;
   }
 

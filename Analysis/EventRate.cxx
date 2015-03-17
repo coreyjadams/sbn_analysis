@@ -3,6 +3,7 @@
 
 #include "EventRate.h"
 
+
 namespace sbn {
 
   void EventRate::mainLoop(){
@@ -39,7 +40,7 @@ namespace sbn {
     // Nue specific stuff:
     dh.config().includeCosmics = false;
     dh.config().includeDirt = false;
-    dh.config().includeOsc = false;
+    dh.config().includeOsc = true;
     dh.config().showerContainmentDist = -999;
     dh.config().minDistanceToStart = -999;
     dh.config().minVertexEnergySignal = 0.0;
@@ -52,11 +53,11 @@ namespace sbn {
     dh.config().sin22thmax = 1.0;
     dh.config().npoints = 500;
 
-    dh.addDetector(kUboone);
-    // dh.addDetector(kNearDet);
-    dh.addSignal(kNue);
+    // dh.addDetector(kUboone);
+    dh.addDetector(kNearDet);
+    dh.addSignal(kNumu);
 
-    dh.setBins(kNue, nueBins);
+    dh.setBins(kNumu, numuBins);
 
     if (! dh.init() ){
       std::cerr << "Init failed to complete.  Exiting.\n\n";
@@ -67,12 +68,66 @@ namespace sbn {
 
     // Try to get something out of the DataHandle
     std::vector<float> nominalData = dh.getData();
+    std::vector<float> oscData;
+    dh.getOscDataByValue(oscData, 0.013, 0.43, (int)kNumu);
+
+    // get the data by type?
+    std::vector<std::vector<float> > dataByType = dh.getDetector(kNearDet).getSampleDataByType(kNumu);
+
+    std::cout << "OscData size is " << oscData.size()<<std::endl;
     float totalEvents = 0;
     for (unsigned int i = 0; i < nominalData.size(); i ++){
-      std::cout << "nominalData[" << i << "]:\t" << nominalData[i] << std::endl;
+      std::cout << "nominalData[" << i << "]:\t" << nominalData[i] 
+                << "oscData[" << i << "]:\t" << oscData[i]
+                << std::endl;
       totalEvents += nominalData[i];
     }
     std::cout << "total number of events is: " << totalEvents << std::endl;
+
+
+    // Make the histograms from the data-by-type
+    std::vector<int > nueColorMap   {kGreen+3, kGreen+2, kGreen-6, kOrange-8,
+                                     kOrange-8, kBlack, kBlue-9, 15, kPink,8};
+
+    std::vector<std::string> energyMapFancy 
+                                           {"True Energy", "Reco. Energy", "Reco. Energy",
+                                            "CCQE Energy", "Lepton Candidate Energy"};
+
+
+
+    THStack * stack = new THStack("eventsByType",Form("Event Rates at L = %s",baselMap[dh.config().basel].c_str()) );
+    std::vector<TH1F*> histogramsByType;
+    histogramsByType.resize(dataByType.size());
+    for (unsigned int i = 0; i < dataByType.size(); i ++ ){
+      histogramsByType[i] = utils.makeHistogram(dataByType[i], numuBins);
+      histogramsByType[i] -> SetFillColor(nueColorMap[i]);
+      stack -> Add(histogramsByType[i]);
+    }
+
+    TCanvas * c = new TCanvas("sc0", "Stacked event rates", 1.5*700, 1.5*500);
+
+    double max = 1.75*(stack -> GetMaximum());
+    TH1F *chr = c->DrawFrame(numuBins.front()-0.01,0.0,numuBins.back(),max);
+
+    chr->GetYaxis()->SetTitle("Events / GeV");
+    chr->GetYaxis()->SetTitleSize(0.06);
+    chr->GetYaxis()->SetTitleOffset(0.9);
+    chr->GetYaxis()->CenterTitle();
+    chr->GetXaxis()->CenterTitle();
+    chr->GetXaxis()->SetLabelSize(0.05);
+
+    TString EnergyLabel = energyMapFancy[dh.config().energy];
+    EnergyLabel += " (GeV)";
+    chr->GetXaxis()->SetTitle(EnergyLabel);
+    chr->GetXaxis()->SetTitleOffset(0.95);
+    chr->GetXaxis()->SetTitleSize(0.07);
+    // chr->GetXaxis()->SetLimits(emin-0.01,emax);
+    chr->Draw();
+
+    stack -> Draw("hist same ");
+
+    // leg->Draw();
+
 
 
   }

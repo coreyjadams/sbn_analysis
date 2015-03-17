@@ -35,9 +35,9 @@ public:
   ~BaseUtils(){}
 
   TH1F* makeHistogram(const std::vector<float> & input, 
-                      double lowbin, double highbin);
+                      double lowbin, double highbin, bool norm = true);
   TH1F* makeHistogram(const std::vector<float> & input, 
-                      const std::vector<float> & bins);
+                      const std::vector<float> & bins, bool norm = true);
 
   std::vector<float> collapseVector(std::vector<float> input,
                                     int nbins_nue, int nbins_numu, int nL);

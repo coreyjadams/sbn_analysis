@@ -564,7 +564,8 @@ namespace sbn {
   void NtupleReader::LoopDataOsc(std::vector<std::vector<float> > & outputOsc){
     
 // This is the loop function, which is the heart of the class.
-    TString dummytarget = config.path+fileNameSource;
+    TString dummytarget = config.path+fileNameSourceOsc;
+    std::cout << "dummytarget is " << dummytarget << std::endl;
     TChain *c = new TChain("EventsTot");
     TChain *d = new TChain("EventsTot");
     double fill_energy,true_energy,Elep,wgt,nuleng;
@@ -630,14 +631,6 @@ namespace sbn {
 
     d->SetBranchAddress("wgt",&checking_wgt);
 
-    c->Reset();
-    c->Add(dummytarget);
-    if (c==0) return;
-    
-    d->Reset();
-    d->Add(dummytarget);
-    if (d==0) return;
-    
     const Int_t nentries2 = Int_t(c->GetEntries());
     
     // The histogram used for binning:
@@ -693,9 +686,6 @@ namespace sbn {
           if (inno == 12 || inno == -12)
             continue;
         }
-
-
-
 
         if (Elep < 0.200) continue;
 

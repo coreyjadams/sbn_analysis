@@ -597,7 +597,18 @@ void Reprocessing::Loop(std::string signal,
 
 
     // Histograms that are useful for Lariat, request of Flavio:
-    // TH1D * protonP = new TH1D("protonP",protonP,50,0,2000);
+    TH1D * protonE = new TH1D("protonE","protonE",50,0,3);
+    TH1D * protonP = new TH1D("protonP","protonP",50,0,2);
+    TH1D * electronE = new TH1D("electronE","electronE",50,0,3);
+    TH1D * electronP = new TH1D("electronP","electronP",50,0,2);
+    TH1D * pionE = new TH1D("pionE","pionE",50,0,3);
+    TH1D * pionP = new TH1D("pionP","pionP",50,0,2);
+    TH1D * muonE = new TH1D("muonE","muonE",50,0,3);
+    TH1D * muonP = new TH1D("muonP","muonP",50,0,2);
+    TH1D * kaonE = new TH1D("kaonE","kaonE",50,0,3);
+    TH1D * kaonP = new TH1D("kaonP","kaonP",50,0,2);
+    TH1D * neutronE = new TH1D("neutronE","neutronE",50,0,3);
+    TH1D * neutronP = new TH1D("neutronP","neutronP",50,0,2);
 
 
     // These are commented out but please don't delete them.
@@ -832,22 +843,32 @@ void Reprocessing::Loop(std::string signal,
       for (unsigned int i = 0; i < GeniePDG->size(); ++i)
       {
         double e = GenieMomentum->at(i).E();
-        // double p = sqrt(GenieMomentum->at(i).X()*GenieMomentum->at(i).X() 
-        //               + GenieMomentum->at(i).Y()*GenieMomentum->at(i).Y()
-        //               + GenieMomentum->at(i).Z()*GenieMomentum->at(i).Z() );
+        double p = sqrt(GenieMomentum->at(i).X()*GenieMomentum->at(i).X() 
+                      + GenieMomentum->at(i).Y()*GenieMomentum->at(i).Y()
+                      + GenieMomentum->at(i).Z()*GenieMomentum->at(i).Z() );
                  
         if (GeniePDG->at(i) == 211 || GeniePDG->at(i) == -211){
           if (!isCC) ChargedPionEnergy -> Fill(e-pionMass, fluxweight);
           chargedPion ++;
+          pionP -> Fill(p,fluxweight);
+          pionE -> Fill(e,fluxweight);
         }
         if (GeniePDG->at(i) == 111 ){
           neutralPion ++;
         }
         if (GeniePDG->at(i) == 13 || GeniePDG->at(i) == -13){
           MuonEnergy -> Fill(e, fluxweight);
+          muonE -> Fill(e,fluxweight);
+          muonP -> Fill(p,fluxweight);
+        }
+        if (GeniePDG ->at(i) == 11 || GeniePDG -> at(i) == 11){
+            electronE -> Fill(e, fluxweight);
+            electronP -> Fill(p, fluxweight);
         }
         if (GeniePDG->at(i) == 2212){ //protons
           //apply a cut on protons:
+          protonP -> Fill(p, fluxweight);
+          protonE -> Fill(e, fluxweight);
           double e = GenieMomentum->at(i).E() - protonMass;
           if (e > 0.021) {
             proton ++;
@@ -855,9 +876,13 @@ void Reprocessing::Loop(std::string signal,
           if (e < 0) print("Error! Energy less than 0!");
         }
         if (GeniePDG->at(i) == 2112){ //neutrons
+          neutronE -> Fill(e, fluxweight);
+          neutronP -> Fill(p, fluxweight);
           neutron ++;
         }
         if (abs(GeniePDG->at(i)) == 311 ){
+          kaonE -> Fill(e, fluxweight);
+          kaonP -> Fill(p, fluxweight);
           NChargedKaon ++;
         }
         if (GeniePDG->at(i) == 310 || GeniePDG->at(i) == 130){
@@ -882,6 +907,8 @@ void Reprocessing::Loop(std::string signal,
       //Lastly, account for the neutrons:
       if (neutron == 0) {}// Do nothing
       else if (neutron >= 1) iChan += 1;
+
+
 /*
       switch (nuchan){
         case 53:
@@ -1563,8 +1590,8 @@ void Reprocessing::Loop(std::string signal,
 
       if (signal == "numu"){
 
-        if ( isFid && isCC && abs(inno) == 14 && 
-             leptonMom->at(0).E() > egammaThreshold ){
+        if ( isFid && isCC && abs(inno) == 14 ){
+             // leptonMom->at(0).E() > egammaThreshold ){
 
           // if (contained)
           //   std::cout << "contained length is " << muon_ContainedLength << std::endl;
@@ -1572,7 +1599,7 @@ void Reprocessing::Loop(std::string signal,
           //   std::cout << "non-contained length is " << muon_ContainedLength << std::endl;
 
 
-          if (!contained || muon_ContainedLength < 100) {
+          if (!contained && muon_ContainedLength < 100) {
             // std::cout << "continuing!" << std::endl;
             continue;
           }

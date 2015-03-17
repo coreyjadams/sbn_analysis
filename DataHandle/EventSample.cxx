@@ -30,17 +30,22 @@ namespace sbn{
   }
 
   bool EventSample::read(){
+    // Get the nominal data
     reader.getData(nominalData_unbinned, nominalDataByType_unbinned);
+    // Get the oscillated data - pass by reference
     if (config.includeOsc) 
       reader.getDataOsc(oscData_unbinned);
     
 
     // Now bin the data
     nominalData = utils.rebinVector(nominalData_unbinned, activeBins);
-   
+    
+    // rebin the nominal data by type
     nominalDataByType.resize(nominalDataByType_unbinned.size());
     for (unsigned int i = 0; i < nominalDataByType_unbinned.size(); i++)
       nominalDataByType[i] = utils.rebinVector(nominalDataByType_unbinned[i], activeBins);
+   
+    //rebin the oscillated data
     if (config.includeOsc){
       oscData.resize(oscData_unbinned.size());
       for (unsigned int i = 0; i < oscData_unbinned.size(); i++)
@@ -49,42 +54,44 @@ namespace sbn{
     return true;
   }
 
-    /// Get the data:
-    std::vector<float> const &  EventSample::getData() const{
-      return nominalData;
-    }
-    //The osc data, returns the closest match in sin22th, dm2 space
-    std::vector<float>  EventSample::getDataOsc(float sin22th, float dm2) {
+  /// Get the data:
+  std::vector<float> const &  EventSample::getData() const{
+    
+    return nominalData;
+  }
 
-      // Already have sin22th, just get the closest dm2point:
-      int dm2_point = utils.dm2ValueToIndex(dm2,config);
-      std::vector<float> returnVec;
-      returnVec.reserve(oscData[dm2_point].size());
-      for(unsigned int i =0; i < returnVec.size();i++)
-        returnVec.push_back(sin22th*oscData[dm2_point][i]);
-      return returnVec;
+  //The osc data, returns the closest match in sin22th, dm2 space
+  std::vector<float>  EventSample::getDataOsc(float sin22th, float dm2) {
 
-    }
-    //The osc data, returns the point of each as requested
-    std::vector<float>  EventSample::getDataOsc(int sin22th_point, int dm2_point) {
-      // dm2_point is already the index needed to get the right osc data;
-      // need the correct scale factor, so set it up:
-      float sin22th = utils.sin22thIndexToValue(sin22th_point,config);
-      std::vector<float> returnVec;
-      returnVec.reserve(oscData[dm2_point].size());
-      for(unsigned int i =0; i < returnVec.size();i++)
-        returnVec.push_back(sin22th*oscData[dm2_point][i]);
-      return returnVec;
-    }
+    // Already have sin22th, just get the closest dm2point:
+    int dm2_point = utils.dm2ValueToIndex(dm2,config);
+    std::vector<float> returnVec;
+    returnVec.reserve(oscData[dm2_point].size());
+    for(unsigned int i =0; i < oscData[dm2_point].size(); i++)
+      returnVec.push_back(sin22th*oscData[dm2_point][i]);
+    return returnVec;
 
-    std::vector<std::vector<float>> const &  EventSample::getDataByType(){
-      return nominalDataByType;
-    }
+  }
+  //The osc data, returns the point of each as requested
+  std::vector<float>  EventSample::getDataOsc(int sin22th_point, int dm2_point) {
+    // dm2_point is already the index needed to get the right osc data;
+    // need the correct scale factor, so set it up:
+    float sin22th = utils.sin22thIndexToValue(sin22th_point,config);
+    std::vector<float> returnVec;
+    returnVec.reserve(oscData[dm2_point].size());
+    for(unsigned int i =0; i < oscData[dm2_point].size(); i++)
+      returnVec.push_back(sin22th*oscData[dm2_point][i]);
+    return returnVec;
+  }
 
-    // Useful to be able to get the bins ...
-    std::vector<float> const &  EventSample::getBins() const{
-      return defaultBins;
-    }
+  std::vector<std::vector<float>> const &  EventSample::getDataByType() const{
+    return nominalDataByType;
+  }
+
+  // Useful to be able to get the bins ...
+  std::vector<float> const &  EventSample::getBins() const{
+    return defaultBins;
+  }
 
 }
 

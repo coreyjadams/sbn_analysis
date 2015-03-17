@@ -60,6 +60,9 @@ namespace sbn {
 
     std::vector<float> const &  getCombinedBins();
 
+    std::vector<std::vector<float> > getSampleDataByType(int signal);
+
+
     // Return the uncombined samples of data:
     // These just go through the appropriate EventSample object
     std::vector<float> const &  getSampleData(int sample);
