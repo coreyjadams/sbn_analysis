@@ -303,6 +303,10 @@ void Reprocessing::Loop(std::string signal,
     newt->Branch("MuonExitPos",&MuonExitPos);
     newt->Branch("MuonExitMom",&MuonExitMom);
 
+    newt->Branch("GeniePDG",&GeniePDG);
+    newt->Branch("GenieMomentum",&GenieMomentum);
+    newt->Branch("GenieProc",&GenieProc);
+
 
     if (signal != "fosc" || skipMultiWeights)
       newt->Branch("MultiWeight",&MultiWeight);
@@ -597,18 +601,25 @@ void Reprocessing::Loop(std::string signal,
 
 
     // Histograms that are useful for Lariat, request of Flavio:
-    TH1D * protonE = new TH1D("protonE","protonE",50,0,3);
-    TH1D * protonP = new TH1D("protonP","protonP",50,0,2);
-    TH1D * electronE = new TH1D("electronE","electronE",50,0,3);
-    TH1D * electronP = new TH1D("electronP","electronP",50,0,2);
-    TH1D * pionE = new TH1D("pionE","pionE",50,0,3);
-    TH1D * pionP = new TH1D("pionP","pionP",50,0,2);
-    TH1D * muonE = new TH1D("muonE","muonE",50,0,3);
-    TH1D * muonP = new TH1D("muonP","muonP",50,0,2);
-    TH1D * kaonE = new TH1D("kaonE","kaonE",50,0,3);
-    TH1D * kaonP = new TH1D("kaonP","kaonP",50,0,2);
-    TH1D * neutronE = new TH1D("neutronE","neutronE",50,0,3);
-    TH1D * neutronP = new TH1D("neutronP","neutronP",50,0,2);
+    TFile * forFlavio = new TFile("bnb_histograms.root","RECREATE");
+    TH1D * protonE    = new TH1D("protonE","protonE",50,0,3);
+    TH1D * protonKE   = new TH1D("protonKE","protonKE",50,0,1);
+    TH1D * protonP    = new TH1D("protonP","protonP",50,0,2);
+    TH1D * electronKE = new TH1D("electronKE","electronKE",50,0,3);
+    TH1D * electronE  = new TH1D("electronE","electronE",50,0,3);
+    TH1D * electronP  = new TH1D("electronP","electronP",50,0,2);
+    TH1D * pionKE     = new TH1D("pionKE","pionKE",50,0,3);
+    TH1D * pionE      = new TH1D("pionE","pionE",50,0,3);
+    TH1D * pionP      = new TH1D("pionP","pionP",50,0,2);
+    TH1D * muonKE     = new TH1D("muonKE","muonKE",50,0,3);
+    TH1D * muonE      = new TH1D("muonE","muonE",50,0,3);
+    TH1D * muonP      = new TH1D("muonP","muonP",50,0,2);
+    TH1D * kaonKE     = new TH1D("kaonKE","kaonKE",50,0,3);
+    TH1D * kaonE      = new TH1D("kaonE","kaonE",50,0,3);
+    TH1D * kaonP      = new TH1D("kaonP","kaonP",50,0,2);
+    TH1D * neutronKE  = new TH1D("neutronKE","neutronKE",50,0,1);
+    TH1D * neutronE   = new TH1D("neutronE","neutronE",50,0,3);
+    TH1D * neutronP   = new TH1D("neutronP","neutronP",50,0,2);
 
 
     // These are commented out but please don't delete them.
@@ -830,6 +841,10 @@ void Reprocessing::Loop(std::string signal,
       int neutralPion = 0;
       double protonMass = 0.9382; // GeV
       double pionMass = 0.1395; // GeV
+      double neutronMass = 0.9396; // GeV
+      double electronMass = 0.000511; // GeV
+      double kaonMass = 0.4937; // GeV
+      double muonMass = 0.1057;
 
       if (verbose){
         std::cout << "Genie vector sizes: \n"
@@ -850,6 +865,7 @@ void Reprocessing::Loop(std::string signal,
         if (GeniePDG->at(i) == 211 || GeniePDG->at(i) == -211){
           if (!isCC) ChargedPionEnergy -> Fill(e-pionMass, fluxweight);
           chargedPion ++;
+          pionKE -> Fill(e - pionMass);
           pionP -> Fill(p,fluxweight);
           pionE -> Fill(e,fluxweight);
         }
@@ -858,10 +874,12 @@ void Reprocessing::Loop(std::string signal,
         }
         if (GeniePDG->at(i) == 13 || GeniePDG->at(i) == -13){
           MuonEnergy -> Fill(e, fluxweight);
+          muonKE ->Fill(e - muonMass);
           muonE -> Fill(e,fluxweight);
           muonP -> Fill(p,fluxweight);
         }
         if (GeniePDG ->at(i) == 11 || GeniePDG -> at(i) == 11){
+            electronKE -> Fill(e - electronMass, fluxweight);
             electronE -> Fill(e, fluxweight);
             electronP -> Fill(p, fluxweight);
         }
@@ -869,18 +887,27 @@ void Reprocessing::Loop(std::string signal,
           //apply a cut on protons:
           protonP -> Fill(p, fluxweight);
           protonE -> Fill(e, fluxweight);
-          double e = GenieMomentum->at(i).E() - protonMass;
-          if (e > 0.021) {
+          double ke = GenieMomentum->at(i).E() - protonMass;
+          if (ke > 0.021) {
             proton ++;
+            protonKE -> Fill(ke, fluxweight);
           }
           if (e < 0) print("Error! Energy less than 0!");
         }
         if (GeniePDG->at(i) == 2112){ //neutrons
           neutronE -> Fill(e, fluxweight);
+          neutronKE -> Fill(e - neutronMass, fluxweight);
           neutronP -> Fill(p, fluxweight);
+          double ke = GenieMomentum->at(i).E() - neutronMass;
+          if (ke > 0.021) {
+            // proton ++;
+            neutronKE -> Fill(ke, fluxweight);
+          }
+
           neutron ++;
         }
         if (abs(GeniePDG->at(i)) == 311 ){
+          kaonKE -> Fill(e- kaonMass, fluxweight);
           kaonE -> Fill(e, fluxweight);
           kaonP -> Fill(p, fluxweight);
           NChargedKaon ++;
@@ -1924,6 +1951,26 @@ void Reprocessing::Loop(std::string signal,
 
     std::cout << "nFoscEvents: " << nFoscEvents << std::endl;
     std::cout << "nNumuCCEvents: " << nNumuCCEvents << std::endl;
+
+    forFlavio -> cd();
+    protonE    -> Write("protonE   ");
+    protonKE   -> Write("protonKE  ");
+    protonP    -> Write("protonP   ");
+    electronKE -> Write("electronKE");
+    electronE  -> Write("electronE ");
+    electronP  -> Write("electronP ");
+    pionKE     -> Write("pionKE    ");
+    pionE      -> Write("pionE     ");
+    pionP      -> Write("pionP     ");
+    muonKE     -> Write("muonKE    ");
+    muonE      -> Write("muonE     ");
+    muonP      -> Write("muonP     ");
+    kaonKE     -> Write("kaonKE    ");
+    kaonE      -> Write("kaonE     ");
+    kaonP      -> Write("kaonP     ");
+    neutronKE  -> Write("neutronKE ");
+    neutronE   -> Write("neutronE  ");
+    neutronP   -> Write("neutronP  ");
 
 }
 
