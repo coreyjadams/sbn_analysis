@@ -185,7 +185,7 @@ class Reprocessing {
 
     // if parameter tree is not specified (or zero), connect the file
     // used to generate this class and read the Tree.
-    // gROOT -> ProcessLine(".L LorentzVectorLight.h+");
+    gROOT -> ProcessLine(".L loadLibs.C+");
 
     TTree *tree;
     if (file.Length() == 0){

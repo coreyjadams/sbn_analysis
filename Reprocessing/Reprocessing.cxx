@@ -303,8 +303,8 @@ void Reprocessing::Loop(std::string signal,
     newt->Branch("MuonExitPos",&MuonExitPos);
     newt->Branch("MuonExitMom",&MuonExitMom);
 
-    newt->Branch("GeniePDG",&GeniePDG);
-    newt->Branch("GenieMomentum",&GenieMomentum);
+    newt->Branch("GeniePDG","std::vector<int>" ,&GeniePDG);
+    newt->Branch("GenieMomentum","std::vector<TLorentzVector>",&GenieMomentum);
     newt->Branch("GenieProc",&GenieProc);
 
 
