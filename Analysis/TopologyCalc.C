@@ -4,10 +4,12 @@
 #include "TChain.h"
 #include "TString.h"
 #include "TSystem.h"
+#include "TROOT.h"
+#include "TLorentzVector.h"
 
 void TopologyCalc(TString target){
 
-  gSystem->Load("liblar1Osc.so");
+  gROOT->ProcessLine(".L loadLibs.C+");
 
   Int_t nbytes = 0,nb = 0;
   Int_t evtcounter =0;
@@ -32,6 +34,7 @@ void TopologyCalc(TString target){
 
   bool useMultiWeights = false;
 
+  std::vector<TLorentzVector> * GenieMomentum =0;
 
   c->Reset();
   c->Add(target);
@@ -57,6 +60,7 @@ void TopologyCalc(TString target){
   c->SetBranchAddress("IsFiducial", &isFid);
   c->SetBranchAddress("IsActive", &isAct);
   c->SetBranchAddress("NPi0FinalState", &NPi0);
+  c->SetBranchAddress("GenieMomentum",&GenieMomentum);
 
   std::vector<std::vector<float> > *MultiWeight=0;
   unsigned int nWeights = 0;
