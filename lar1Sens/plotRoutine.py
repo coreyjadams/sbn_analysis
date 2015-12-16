@@ -21,10 +21,10 @@ n.setUse100m(       True);
 n.setUse470m(       True);
 n.setUseT600_onaxis(True);
 
-yearsRunning = 3.0;
+yearsRunning = 3.0*1.25;
 n.setLAr1NDPOT(yearsRunning*2.2e20);
 # n.setUboonePOT(yearsRunning*2.2e20);
-n.setUboonePOT(6.6e20+yearsRunning*2.2e20);
+n.setUboonePOT(yearsRunning*2.2e20);
 n.setIcarusPOT(yearsRunning*2.2e20);
 
 # n.extendFileName("fullCosmics");
@@ -107,8 +107,8 @@ n.setNumuBins(numu_bins);
 
 n.setIncludeFosc(True);
 n.setIncludeNumus(False);
-n.setIncludeCosmics(False);
-n.setIncludeDirt(False);
+n.setIncludeCosmics(True);
+n.setIncludeDirt(True);
 
 
 n.setInflateSystematics(False);
@@ -144,10 +144,10 @@ n.setSavePlots(True);
 
 covMatList = ROOT.vector(ROOT.string)();
 covMatListSource = ROOT.vector(int)();
-# covMatList.push_back("xsec");
-# covMatListSource.push_back(kTotal_xsec);
-# covMatList.push_back("flux");
-# covMatListSource.push_back(kTotal_flux);
+covMatList.push_back("xsec");
+covMatListSource.push_back(kTotal_xsec);
+covMatList.push_back("flux");
+covMatListSource.push_back(kTotal_flux);
 
 n.setIncludeDetSys(False);
 
@@ -163,3 +163,5 @@ n.setMakeEventRatePlots(True);
 n.setMakeAltSensPlot(False);
 
 n.Run();
+
+nd = input("Waiting for enter ...")

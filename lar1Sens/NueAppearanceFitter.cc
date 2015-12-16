@@ -223,7 +223,7 @@ namespace lar1{
       cosmicScales.push_back(LAr1NDCosmicScale);
       POT.push_back(LAr1NDPOT);
       scales.back() *= (POT.back() / 6.6e20 );
-      names.push_back(Form("LAr1-ND, %g POT",POT.back()) );
+      names.push_back(Form("SBND, %g POT",POT.back()) );
       detNamesString += "ND_100m_";
     }
     if (use470m) {
@@ -2012,7 +2012,7 @@ namespace lar1{
     // plotUtils.miniBoone_plot_nu(padTemp);
     // plotUtils.miniBoone_plot_anu(padTemp);
     // plotUtils.plotGFData(padTemp);
-    // plotUtils.giunti_plot(padTemp);
+    plotUtils.giunti_plot(padTemp);
 
     sens90->Draw("l same");
    

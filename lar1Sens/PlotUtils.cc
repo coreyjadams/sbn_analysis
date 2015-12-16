@@ -10,8 +10,8 @@ namespace lar1{
   void PlotUtils::lsnd_plot(TPad * c){
     c->cd();
 
-    std::string path = GetEnv("MAKE_TOP_DIR");
-    path.append("/UserDev/lar1Sens/");
+    std::string path = GetEnv("LARLITE_BASEDIR");
+    path.append("/UserDev/sbn_analysis/lar1Sens/");
     std::string data_dir= path;
     data_dir.append("osc_data/");
 
@@ -49,7 +49,9 @@ namespace lar1{
       std::ifstream datafile;
       datafile.open(filename, std::ios_base::in);
       //check if the file is open: 
-      if (!datafile.is_open() ) {std::cerr << "lsnd_plot.C: file " << filename << " not opened" <<std::endl; return;}
+      if (!datafile.is_open() ) {
+        std::cerr << "lsnd_plot: file " << filename << " not opened" <<std::endl; return;
+      }
       //else {std::cout << "Successfully opened " << filename << std::endl;}
       while (!datafile.eof()) {
         datafile >> dummy; 
@@ -64,6 +66,9 @@ namespace lar1{
       gr[ifile] = new TGraph(nlines,x,y);
       datafile.close();
     }
+
+    std::cout << "Graph start max is " << gr[0]-> GetMaximum() << std::endl;
+
     std::cout << "Finished reading data files" << std::endl;
     for (Int_t ifile = 0; ifile<NDATAFILES; ifile++) {
       // Int_t graph_color[NDATAFILES] = {29, 29, 29, 38, 38, 38, 38, 38, 38, 38, 38};
@@ -87,8 +92,8 @@ namespace lar1{
 
   void PlotUtils::miniBoone_plot_nu(TPad* c)
   {
-    std::string path = GetEnv("MAKE_TOP_DIR");
-    path.append("/UserDev/lar1Sens/");
+    std::string path = GetEnv("LARLITE_BASEDIR");
+    path.append("/UserDev/sbn_analysis/lar1Sens/");
     std::string data_dir= path;
     data_dir.append("osc_data/mb_nu/");
 
@@ -123,8 +128,8 @@ namespace lar1{
  
   void PlotUtils::miniBoone_plot_anu(TPad* c)
   {
-    std::string path = GetEnv("MAKE_TOP_DIR");
-    path.append("/UserDev/lar1Sens/");
+    std::string path = GetEnv("LARLITE_BASEDIR");
+    path.append("/UserDev/sbn_analysis/lar1Sens/");
     std::string data_dir= path;
     data_dir.append("osc_data/mb_anu/");
 
@@ -159,8 +164,8 @@ namespace lar1{
   void PlotUtils::giunti_plot(TPad* c)
   {
 
-    std::string path = GetEnv("MAKE_TOP_DIR");
-    path.append("/UserDev/lar1Sens/");
+    std::string path = GetEnv("LARLITE_BASEDIR");
+    path.append("/UserDev/sbn_analysis/lar1Sens/");
     std::string data_dir= path;
     data_dir.append("osc_data/");
 
@@ -516,8 +521,8 @@ namespace lar1{
   }
 
   void PlotUtils::readGFData(std::vector<std::vector<double > > & result){
-    std::string path = GetEnv("MAKE_TOP_DIR");
-    path.append("/UserDev/lar1Sens/");
+    std::string path = GetEnv("LARLITE_BASEDIR");
+    path.append("/UserDev/sbn_analysis/lar1Sens/");
     std::string data_file= path;
     data_file.append("osc_data/dm41th14th24-app.dat");
     // const char* data_file = "osc_data/dm41th14th24-app.dat";

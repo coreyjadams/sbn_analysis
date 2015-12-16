@@ -535,15 +535,15 @@ namespace lar1{
 
     // These backgrounds are nue specific but really they're just an enumeration of ibkgs
     // Can be reused and recycled at will...
-    int kNueFromNueCC_muon        = 1;  // ibkg == 1
-    int kNueFromNueCC_chargeKaon  = 2;  // ibkg == 2
-    int kNueFromNueCC_neutKaon    = 3;  // ibkg == 3
-    int kNueFromEScatter          = 4;  // ibkg == 4
-    int kNueFromNC_pi0            = 5;  // ibkg == 5
-    int kNueFromNC_delta0         = 6;  // ibkg == 6
-    int kNueFromNumuCC            = 7;  // ibkg == 7
-    int kDirt                     = 8;  // ibkg == 8
-    int kOther                    = 9;  // ibkg == 9
+    int kNueFromNueCC_muon        = 0;  // ibkg == 1
+    int kNueFromNueCC_chargeKaon  = 1;  // ibkg == 2
+    int kNueFromNueCC_neutKaon    = 2;  // ibkg == 3
+    int kNueFromEScatter          = 3;  // ibkg == 4
+    int kNueFromNC_pi0            = 4;  // ibkg == 5
+    int kNueFromNC_delta0         = 5;  // ibkg == 6
+    int kNueFromNumuCC            = 6;  // ibkg == 7
+    int kDirt                     = 7;  // ibkg == 8
+    int kOther                    = 8;  // ibkg == 9
 
     // Need these for the histograms:
     double emin = bins.front();
