@@ -6,37 +6,20 @@
 
 namespace sbn {
 
-  void EventRate::mainLoop(){
+void EventRate::mainLoop() {
     // Configure the data handler:
     dh.setEnergy(kCaloNoNeutrals);
     dh.setMode(kNu);
 
 
-    dh.config().path                  = "/media/cadams/data_linux/testFramework/";
-    // config.npoints               = 500;
-    // config.forceRemake           = false;
-    // config.includeOsc            = true;
-    // config.multiWeightSource     = 0;
-    // config.usingMultiWeights     = false;
-    // config.absolute_MWSource     = false;
-    // config.nWeights              = 250;
-    // // config.includeCosmics        = r.includeCosmics;
-    // // config.includeDirt           = r.includeDirt;
-    // config.showerContainmentDist = -999;
-    // config.minDistanceToStart    = -999;
-    // config.minVertexEnergySignal = 0;
-    // config.minVertexEnergyPhoton = 0.05;
-    // config.minShowerGap          = 3.0;
-    // this -> setBins(nueBins);
-    // return;
-
+    dh.config().path                  = "/data_linux/horn_upgrade/";
     // Standard config for most files:
     dh.config().forceRemake = false;
     // Multiweight configuration:
-    dh.config().usingMultiWeights=false;
-    dh.config().multiWeightSource=0;
-    dh.config().absolute_MWSource=false;
-    dh.config().nWeights=250;
+    dh.config().usingMultiWeights = false;
+    dh.config().multiWeightSource = 0;
+    dh.config().absolute_MWSource = false;
+    dh.config().nWeights = 250;
     // Nue specific stuff:
     dh.config().includeCosmics = false;
     dh.config().includeDirt = false;
@@ -55,13 +38,13 @@ namespace sbn {
 
     // dh.addDetector(kUboone);
     dh.addDetector(kNearDet);
-    dh.addSignal(kNumu);
+    dh.addSignal(kNue);
 
-    dh.setBins(kNumu, numuBins);
+    dh.setBins(kNue, nueBins);
 
-    if (! dh.init() ){
-      std::cerr << "Init failed to complete.  Exiting.\n\n";
-      exit(-1);
+    if (! dh.init() ) {
+        std::cerr << "Init failed to complete.  Exiting.\n\n";
+        exit(-1);
     }
     dh.read();
 
@@ -69,45 +52,53 @@ namespace sbn {
     // Try to get something out of the DataHandle
     std::vector<float> nominalData = dh.getData();
     std::vector<float> oscData;
-    dh.getOscDataByValue(oscData, 0.013, 0.43, (int)kNumu);
+    dh.getOscDataByValue(oscData, 0.013, 0.43, (int)kNue);
 
     // get the data by type?
-    std::vector<std::vector<float> > dataByType = dh.getDetector(kNearDet).getSampleDataByType(kNumu);
+    std::vector<std::vector<float> > dataByType = dh.getDetector(kNearDet).getSampleDataByType(kNue);
 
-    std::cout << "OscData size is " << oscData.size()<<std::endl;
+
+
+    std::cout << "OscData size is " << oscData.size() << std::endl;
     float totalEvents = 0;
-    for (unsigned int i = 0; i < nominalData.size(); i ++){
-      std::cout << "nominalData[" << i << "]:\t" << nominalData[i] 
-                << "oscData[" << i << "]:\t" << oscData[i]
-                << std::endl;
-      totalEvents += nominalData[i];
+    for (unsigned int i = 0; i < nominalData.size(); i ++) {
+        std::cout << "nominalData[" << i << "]:\t" << nominalData[i]
+                  << "\toscData[" << i << "]:\t" << oscData[i]
+                  << std::endl;
+        totalEvents += nominalData[i];
     }
     std::cout << "total number of events is: " << totalEvents << std::endl;
 
 
     // Make the histograms from the data-by-type
-    std::vector<int > nueColorMap   {kGreen+3, kGreen+2, kGreen-6, kOrange-8,
-                                     kOrange-8, kBlack, kBlue-9, 15, kPink,8};
+    std::vector<int > nueColorMap   {kGreen + 3, kGreen + 2, kGreen - 6, kOrange - 8,
+                                     kOrange - 8, kBlack, kBlue - 9, 15, kPink, 8};
 
-    std::vector<std::string> energyMapFancy 
-                                           {"True Energy", "Reco. Energy", "Reco. Energy",
-                                            "CCQE Energy", "Lepton Candidate Energy"};
+    std::vector<std::string> energyMapFancy
+    {   "True Energy", "Reco. Energy", "Reco. Energy",
+        "CCQE Energy", "Lepton Candidate Energy"};
 
 
 
-    THStack * stack = new THStack("eventsByType",Form("Event Rates at L = %s",baselMap[dh.config().basel].c_str()) );
+    THStack * stack = new THStack("eventsByType",
+                                  Form("Event Rates at L = %s",
+                                       baselMap[kNearDet].c_str()) );
     std::vector<TH1F*> histogramsByType;
     histogramsByType.resize(dataByType.size());
-    for (unsigned int i = 0; i < dataByType.size(); i ++ ){
-      histogramsByType[i] = utils.makeHistogram(dataByType[i], numuBins);
-      histogramsByType[i] -> SetFillColor(nueColorMap[i]);
-      stack -> Add(histogramsByType[i]);
+    for (unsigned int i = 0; i < dataByType.size(); i ++ ) {
+        histogramsByType[i] = utils.makeHistogram(dataByType[i], nueBins);
+        histogramsByType[i] -> SetFillColor(nueColorMap[i]);
+        stack -> Add(histogramsByType[i]);
     }
 
-    TCanvas * c = new TCanvas("sc0", "Stacked event rates", 1.5*700, 1.5*500);
 
-    double max = 1.75*(stack -> GetMaximum());
-    TH1F *chr = c->DrawFrame(numuBins.front()-0.01,0.0,numuBins.back(),max);
+    TH1F * signalHist = utils.makeHistogram(oscData, nueBins);
+    stack -> Add(signalHist);
+
+    TCanvas * c = new TCanvas("sc0", "Stacked event rates", 1.5 * 700, 1.5 * 500);
+
+    double max = 1.75 * (stack -> GetMaximum());
+    TH1F *chr = c->DrawFrame(nueBins.front() - 0.01, 0.0, nueBins.back(), max);
 
     chr->GetYaxis()->SetTitle("Events / GeV");
     chr->GetYaxis()->SetTitleSize(0.06);
@@ -130,7 +121,7 @@ namespace sbn {
 
 
 
-  }
+}
 } // sbn
 
 #endif

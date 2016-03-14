@@ -79,6 +79,8 @@ namespace sbn {
 
     void setBins(int signal, const std::vector<float> & bins);
 
+    void setScale(int signal, float scale);
+
   private:
 
     DetUtils utils;

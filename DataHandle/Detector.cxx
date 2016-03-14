@@ -27,8 +27,12 @@ namespace sbn {
     if (samples.find(sample) == samples.end()) {
       return false;
     }
-    std::cout << "Determined that " << sample << " is present.\n\n\n\n\n";
+    // std::cout << "Determined that " << sample << " is present.\n\n\n\n\n";
     return true;
+  }
+
+  void Detector::setScale(int sample, float scale){
+    samples[sample] -> getConfig().overallScale = scale;
   }
 
   bool Detector::init(){

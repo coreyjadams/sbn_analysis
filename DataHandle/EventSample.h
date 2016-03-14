@@ -61,6 +61,8 @@ namespace sbn{
 
     void setBins  (std::vector<float> bins) {activeBins = bins;}
 
+    readConfig & getConfig(){return config;}
+
   private:
 
     /* This section is the configuration data */

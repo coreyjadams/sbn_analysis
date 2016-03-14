@@ -63,8 +63,8 @@ namespace sbn{
                  std::vector<std::vector<float> > & nominalDataByType);
     void getDataOsc(std::vector<std::vector<float> > & outputOsc);
 
-    // std::vector<float> GetCosmicsFromFile();
-    // std::vector<float> GetDirtFromFile();
+    std::vector<float> GetCosmicsFromFile();
+    std::vector<float> GetDirtFromFile();
 
 
   private:
@@ -89,7 +89,7 @@ namespace sbn{
     void loadBar(int x, int n, int r, int w);
 
 
-    // This struct holds all the file specifiy information 
+    // This struct holds all the file specific information 
     readConfig config;
 
     SampleUtils utils;
