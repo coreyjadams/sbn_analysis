@@ -18,6 +18,9 @@ OSNAME          = $(shell uname -s)
 HOST            = $(shell uname -n)
 OSNAMEMODE      = $(OSNAME)
 
+CINTFLAGS += -p
+CXXFLAGS +=  `root-config --cflags`
+
 # call kernel specific compiler setup
 include $(LARLITE_BASEDIR)/Makefile/Makefile.${OSNAME}
 

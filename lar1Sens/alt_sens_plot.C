@@ -9,16 +9,18 @@
 #include "TStyle.h"
 #include "TColor.h"
 #include <vector>
+#include "TROOT.h"
 
+#include <iostream>
 
 void alt_sens_plot(){
 
-  gSystem -> Load("lib/liblar1Sens.so");
+  gSystem->Load("liblar1Sens.so");
 
 
   // TString fileSource = "/home/cadams/nominal_ntuples/sens_plots/";
   // TString fileSource = "/media/cadams/data_linux/stats_comp/";
-  TString fileSource = "/home/cadams/Desktop/PlotsforBackgroundTalk/";
+  TString fileSource = "/data_linux/comparison/";
 
   std::vector<TString> names;
 
@@ -31,11 +33,11 @@ void alt_sens_plot(){
   // names.push_back(fileSource+"altSensPlot_ND_100m_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_fullCosmics_xsec_0_flux_6_dirt_cos_.root");
   // names.push_back(fileSource+"altSensPlot_ND_100m_uB_nue_appearance_ecalo2_nu_vePhot0.05_gap3_fullCosmics_xsec_0_flux_6_dirt_cos_.root");
 
-  names.push_back(fileSource+"Nominal/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_dirt_cos_.root");
-  names.push_back(fileSource+"NoCosmic/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_dirt_.root");
-  names.push_back(fileSource+"NominalNoCosmicNoDirt/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_.root");
-  names.push_back(fileSource+"PlotsTo100MeV/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_.root");
-  // names.push_back(fileSource+"two_horns_lowe/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_.root");
+  names.push_back(fileSource+"/Nominal/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_dirt_cos_.root");
+  // names.push_back(fileSource+"NoCosmic/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_dirt_.root");
+  // names.push_back(fileSource+"NominalNoCosmicNoDirt/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_.root");
+  // names.push_back(fileSource+"PlotsTo100MeV/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_xsec_0_flux_6_.root");
+  names.push_back(fileSource+"/horn_upgrade/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_lessCosmics_3years_xsec_0_flux_6_dirt_cos_.root");
 
   // names.push_back(fileSource+"nominal_stats.root");
   // names.push_back(fileSource+"double_stats.root");

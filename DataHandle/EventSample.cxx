@@ -41,8 +41,6 @@ bool EventSample::read() {
   // Now bin the data
   // nominalData = utils.rebinVector(nominalData_unbinned, activeBins);
 
-  nominalData.clear();
-  nominalData.resize(activeBins.size()-1);
 
 
   // rebin the nominal data by type
@@ -54,9 +52,16 @@ bool EventSample::read() {
     // Scale this sample:
     for (auto & val : nominalDataByType[i]){
       val *= config.backgroundScales[i]*config.overallScale;
-      nominalData[i] += val;
     }
     
+  }
+
+  nominalData.clear();
+  nominalData.resize(activeBins.size()-1);
+  for (auto & vec : nominalDataByType){
+    for (size_t i_bin = 0; i_bin < vec.size(); i_bin ++){
+      nominalData[i_bin] += vec[i_bin];
+    }
   }
 
   //rebin the oscillated data

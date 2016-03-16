@@ -105,6 +105,8 @@ namespace lar1{
 
   private:
 
+    bool verbose;
+
     std::string signal;
     TString path;
     std::string baseline;

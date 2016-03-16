@@ -9,7 +9,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class sample+;
 #pragma link C++ class std::vector<TLorentzVector>+;
 #pragma link C++ class FluxRW+;
 #pragma link C++ class FluxRWnubar+;

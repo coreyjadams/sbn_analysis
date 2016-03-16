@@ -1,3 +1,7 @@
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TCanvas.h"
+
 void add_plot_label( char* label, double x, double y, double size = 0.05, int color = 1, int font = 62, int align = 22 ){
 
   TLatex *latex = new TLatex( x, y, label );
@@ -15,7 +19,7 @@ void plot_matrices(){
   gStyle->SetPalette(56,0);
 
   // TFile *f = new TFile("matrixForDave.root");
-  TFile *f = new TFile("/Users/cja33/Desktop/booster-oscillation-analyses/nue_figures/matrixFiles/nue_appearance_ecalo2_dist0_matrixFile_6_ND_100m_uB_.root");
+  TFile *f = new TFile("/data_linux/nominal_ntuples/matrixFiles/nue_appearance_ecalo2_dist0_matrixFile_6_ND_100m_uB_.root");
 
   TH1D *nue_near = (TH1D*)f->Get("nueEventRates_100m");
   TH1D *numu_near = (TH1D*)f->Get("numuEventRates_100m");

@@ -1,6 +1,38 @@
 import ROOT
 from ROOT import TFile, TCanvas, TLegend
 
+def plotFoscRatiosTrue(fnominal,fupgrade):
+
+    c = TCanvas("fosc","fosc",800,800)
+    fosc_true_nominal = fnominal.Get("totalEventsFosc")
+    fosc_true_upgrade = fupgrade.Get("totalEventsFosc")
+
+
+    fosc_true_ratio = fosc_true_upgrade.Clone()
+    fosc_true_ratio.Divide(fosc_true_nominal)
+    fosc_true_ratio.SetLineColor(ROOT.kRed)
+    fosc_true_ratio.SetTitle("Background Ratio, True Energy")
+    # pi_calo_ratio.SetMinimum(0.5)
+    # pi_calo_ratio.SetMaximum(4.0)
+    fosc_true_ratio.Draw("")
+
+
+    leg = TLegend(0.2,0.75,0.4,0.9)
+    leg.AddEntry(fosc_true_ratio, "Signal Ratio","l")
+    leg.SetFillStyle(0);
+    leg.SetFillColor(0);
+    leg.SetBorderSize(0);
+    # leg.SetTextSize(7)
+    leg.Draw()
+
+    c.Print(outputDir+"signalRatio.pdf","pdf")
+    c.Print(outputDir+"signalRatio.png","png")
+
+
+    return
+
+
+
 
 def plotUpgradeRatiosCalo(fnominal, fupgrade):
 
@@ -158,17 +190,20 @@ if __name__ == '__main__':
   
     outputDir="/home/cadams/Dropbox/Talks/BeamUpgradeMeeting/HornUpgradePlots3/"
 
-    file1="/data_linux/nominal_ntuples/combined_ntuple_470m_nu_processed_nue.root"
-    file2="/data_linux/horn_upgrade_repeat/combined_ntuple_470m_nu_processed_nue.root"
+    # file1="/data_linux/nominal_ntuples/combined_ntuple_470m_nu_processed_nue.root"
+    # file2="/data_linux/horn_upgrade_repeat/combined_ntuple_470m_nu_processed_nue.root"
+    file1="/data_linux/nominal_ntuples/combined_ntuple_470m_nu_fosc_processed_fosc.root"
+    file2="/data_linux/horn_upgrade_repeat/combined_ntuple_470m_nu_fosc_processed_fosc.root"
 
     f1 = TFile(file1)
     f2 = TFile(file2)
 
     ROOT.gStyle.SetOptStat(0)
 
-    plotUpgradeRatiosCalo(f1,f2)
-    plotUpgradeRatiosTrue(f1,f2)
-    plotNueToPi0Ratio(f1,f2)
+    # plotUpgradeRatiosCalo(f1,f2)
+    # plotUpgradeRatiosTrue(f1,f2)
+    # plotNueToPi0Ratio(f1,f2)
 
+    plotFoscRatiosTrue(f1,f2)
 
     # nd = input("Waiting for enter ...")

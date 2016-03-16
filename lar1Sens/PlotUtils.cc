@@ -2,712 +2,756 @@
 
 
 #include "PlotUtils.hh"
+#include "TNtuple.h"
 
-namespace lar1{
+namespace lar1 {
 
-  // PlotUtils::PlotUtils(){}
+// PlotUtils::PlotUtils(){}
 
-  void PlotUtils::lsnd_plot(TPad * c){
-    c->cd();
+std::vector< std::vector< float> > PlotUtils::getChi2MapFromFile(TString fileName, int npoints){
 
-    std::string path = GetEnv("LARLITE_BASEDIR");
-    path.append("/UserDev/sbn_analysis/lar1Sens/");
-    std::string data_dir= path;
-    data_dir.append("osc_data/");
+  TFile f(fileName, "READ");
 
-    // const char* data_dir = "osc_data/";
-    Double_t  dm2BF[] = {1.2};
-    Double_t sin22thBF[] = {0.003};
 
-    const Int_t NDATAFILES = 11;
-    const char * file_list[NDATAFILES] = {"llreg_608_1.vec",
-                                          "llreg_608_2.vec",
-                                          "llreg_608_3.vec",
-                                          "llreg_607_1.vec",
-                                          "llreg_607_2.vec",
-                                          "llreg_607_3.vec",
-                                          "llreg_607_4.vec",
-                                          "llreg_607_5.vec",
-                                          "llreg_607_6.vec",
-                                          "llreg_607_7.vec",
-                                          "llreg_607_8.vec"};
-
-    Int_t graph_color[NDATAFILES] = {29, 29, 29, 38, 38, 38, 38, 38, 38, 38, 38};
-
-    Int_t    nlines;
-    Double_t x[500],y[500];
-    Double_t dummy(0), dummy_old(0);
-    TGraph* gr[NDATAFILES];
-    for (Int_t ifile = 0; ifile<NDATAFILES; ifile++) {
-      nlines = 0;
-      for (Int_t i=0;i<500;i++){x[i]=0.0;y[i]=0.0;}
-      char  filename[200];
-      strcpy(filename, data_dir.c_str());
-      //printf("%s\n",filename);
-      strcat(filename, file_list[ifile]);
-      //printf("%s\n",filename);
-      std::ifstream datafile;
-      datafile.open(filename, std::ios_base::in);
-      //check if the file is open: 
-      if (!datafile.is_open() ) {
-        std::cerr << "lsnd_plot: file " << filename << " not opened" <<std::endl; return;
-      }
-      //else {std::cout << "Successfully opened " << filename << std::endl;}
-      while (!datafile.eof()) {
-        datafile >> dummy; 
-        datafile >> dummy; 
-        datafile >> x[nlines]; 
-        datafile >> y[nlines];
-        nlines++;
-        if (dummy == dummy_old) nlines--; //if last row was empty
-        dummy_old = dummy;
-      }
-
-      gr[ifile] = new TGraph(nlines,x,y);
-      datafile.close();
-    }
-
-    std::cout << "Graph start max is " << gr[0]-> GetMaximum() << std::endl;
-
-    std::cout << "Finished reading data files" << std::endl;
-    for (Int_t ifile = 0; ifile<NDATAFILES; ifile++) {
-      // Int_t graph_color[NDATAFILES] = {29, 29, 29, 38, 38, 38, 38, 38, 38, 38, 38};
-      gr[ifile]->SetFillColor(graph_color[ifile]);
-      // if (graph_color[ifile] == 38)
-        gr[ifile]->Draw("LF");
-    }
-    //Add the best fit point;
-    TGraph * bfPoint = new TGraph(1, sin22thBF, dm2BF);
-    bfPoint -> SetLineColor(2);
-    bfPoint -> SetMarkerStyle(3);
-    bfPoint -> SetMarkerColor(1);
-    bfPoint -> Draw("LP");
-
-    plotGFData(c);
-
-    // giunti_plot(c);
-
-    return;
-  }
-
-  void PlotUtils::miniBoone_plot_nu(TPad* c)
-  {
-    std::string path = GetEnv("LARLITE_BASEDIR");
-    path.append("/UserDev/sbn_analysis/lar1Sens/");
-    std::string data_dir= path;
-    data_dir.append("osc_data/mb_nu/");
-
-    std::vector<TString> file_list;
-    file_list.push_back(data_dir + "fit200_cont_90_0.txt");
-    file_list.push_back(data_dir + "fit200_cont_90_1.txt");
-    file_list.push_back(data_dir + "fit200_cont_90_2.txt");
-    // file_list.push_back(data_dir + "fit200_cont_1s.txt");
-    // file_list.push_back(data_dir + "fit200_cont_90.txt");
-    // file_list.push_back(data_dir + "fit200_cont_99.txt");
-    // file_list.push_back(data_dir + "fit200_sens_90.txt");
-
-    // Now read in the plots
-    //
-    c -> cd();
+  std::vector< std::vector< float> > thisChi2(npoints+1, std::vector<float>(npoints + 1, 0.0));
     
-    std::vector<TGraph *> graphs; 
-    for (auto & file : file_list){
-      graphs.push_back(new TGraph(file.Data()));
-      graphs.back() -> SetFillStyle(0);
-      graphs.back() -> SetMarkerColor(kGreen+2);
-      graphs.back() -> SetMarkerSize(7);
-      graphs.back() -> Draw("P");
-    }    
 
-    // graphs.at(1) -> SetFillStyle(0);
-    // graphs.at(1) -> SetFillStyle(0);
-    // graphs.at(1) -> Draw("P");
+  TNtuple * thisNtuple;
+  f.GetObject("chi2", thisNtuple);
 
-    return;                                                                                                                                                                                                                                                         
-  }
- 
-  void PlotUtils::miniBoone_plot_anu(TPad* c)
+  // set up the variables to be read in by the ntuple:
+  Float_t dm2_temp;
+  Float_t sin22th_temp;
+  Float_t chi2_temp;
+
+  thisNtuple->SetBranchAddress("chisq", &chi2_temp);
+  thisNtuple->SetBranchAddress("dm2", &dm2_temp);
+  thisNtuple->SetBranchAddress("sin22th", &sin22th_temp);
+
+  int i_entry = 0;
+  int i_dm2 = 0;
+  int i_sin22th = 0;
+  while (i_entry < thisNtuple->GetEntries())
   {
-    std::string path = GetEnv("LARLITE_BASEDIR");
-    path.append("/UserDev/sbn_analysis/lar1Sens/");
-    std::string data_dir= path;
-    data_dir.append("osc_data/mb_anu/");
-
-    std::vector<TString> file_list;
-    file_list.push_back(data_dir + "fit200_cont_90.txt");
-    // file_list.push_back(data_dir + "fit200_cont_90_1.txt");
-    // file_list.push_back(data_dir + "fit200_cont_90_2.txt");
-    // file_list.push_back(data_dir + "fit200_cont_1s.txt");
-    // file_list.push_back(data_dir + "fit200_cont_90.txt");
-    // file_list.push_back(data_dir + "fit200_cont_99.txt");
-    // file_list.push_back(data_dir + "fit200_sens_90.txt");
-
-    // Now read in the plots
-    //
-    c -> cd();
-    
-    std::vector<TGraph *> graphs; 
-    for (auto & file : file_list){
-      graphs.push_back(new TGraph(file.Data()));
-      graphs.back() -> SetFillStyle(0);
-      graphs.back() -> SetMarkerColor(kViolet-6);
-      graphs.back() -> SetMarkerSize(3);
-      graphs.back() -> Draw("P");
-    }    
-
-    // graphs.at(1) -> SetFillStyle(0);
-    // graphs.at(1) -> SetFillStyle(0);
-    // graphs.at(1) -> Draw("P");
-
-    return;                                                                                                                                                                                                                                                         
-  }
-  void PlotUtils::giunti_plot(TPad* c)
-  {
-
-    std::string path = GetEnv("LARLITE_BASEDIR");
-    path.append("/UserDev/sbn_analysis/lar1Sens/");
-    std::string data_dir= path;
-    data_dir.append("osc_data/");
-
-    TString file=data_dir + "giunti_con-lev-sem-9000.dat";
-
-    // Now read in the plot
-    TGraph * graph = new TGraph(file.Data()); 
-
-    graph -> SetFillColor(kPink);
-    graph -> SetFillStyle(3001);
-
-
-    double x[1] = {0.0015};
-    double y[1] = {1.5};
-
-    TGraph * bestFit = new TGraph(1,x,y);
-    bestFit -> SetMarkerStyle(33);
-
-
-    c -> cd();
-    graph -> Draw("CF");
-    bestFit -> Draw("P");
-
-    return;                      
-  }
-
-  // adds a plot label to the current canvas
-  void PlotUtils::add_plot_label(char* label, double x, double y,
-                                 double size , int color,
-                                 int font, int align){
-
-    TLatex *latex = new TLatex( x, y, label );
-    latex->SetNDC();
-    latex->SetTextSize(size);
-    latex->SetTextColor(color);
-    latex->SetTextFont(font);
-    latex->SetTextAlign(align);
-    latex->Draw();
-  }
-
-  TLegend * PlotUtils::getMiniBooneLegend(){
-
-    TLegend* leg3=new TLegend(0.198,0.219,0.342,0.2701);
-    leg3->SetFillStyle(0);
-    leg3->SetFillColor(0);
-    leg3->SetBorderSize(0);
-    leg3->SetTextSize(0.02);
-    TGraph *gdummy1 = new TGraph();
-    gdummy1->SetLineColor(kGreen+2);
-    gdummy1->SetLineWidth(2);
-
-
-    // gdummy1 -> SetMarkerStyle(34);
-    // gdummy1 -> SetMarkerColor(kRed +1); 
-    TGraph *gdummy2 = new TGraph();
-    gdummy2->SetLineColor(kViolet-6);
-    gdummy2->SetLineWidth(2);
-    TMarker *gdummy3 = new TMarker();
-    gdummy3 -> SetMarkerStyle(3);
-    gdummy3 -> SetMarkerColor(1);
-    TMarker *gdummy4 = new TMarker();
-    gdummy4 -> SetMarkerStyle(34);
-    gdummy4 -> SetMarkerColor(1);
-    TGraph *gdummy0 = new TGraph();
-    gdummy0 -> SetFillColor(1);
-    gdummy0 -> SetFillStyle(3254);
-    TGraph *gdummy5 = new TGraph();
-    gdummy5 -> SetFillColor(kPink);
-    gdummy5 -> SetFillStyle(3001);
-    TGraph *gdummy6 = new TGraph();
-    gdummy6 -> SetMarkerStyle(33);
-
-    // leg3->AddEntry(gdummy1,"MiniBooNE #nu 90% CL (arXiv:1207.4809)","l");
-    // leg3->AddEntry(gdummy2,"MiniBooNE #bar{#nu} 90% CL (arXiv:1207.4809)","l");
-    leg3->AddEntry(gdummy2,"LSND 90% CL","F");
-    leg3->AddEntry(gdummy3,"LSND Best Fit","P*");
-    leg3->AddEntry(gdummy4,"Global Best Fit (arXiv:1303.3011)","P*");
-    leg3->AddEntry(gdummy0,"Global Fit 90% CL (arXiv:1303.3011)");
-    leg3->AddEntry(gdummy6,"Global Best Fit (arXiv:1308.5288)","P*");
-    leg3->AddEntry(gdummy5,"Global Fit 90% CL (arXiv:1308.5288)");
-
-    return leg3;
-
-  }
-
-  TLegend * PlotUtils::getLSNDLegend(){
-
-    TLegend* leg3=new TLegend(0.2,0.2,0.4,0.35);
-    leg3->SetFillStyle(0);
-    leg3->SetFillColor(0);
-    leg3->SetBorderSize(0);
-    leg3->SetTextSize(0.02);
-    TGraph *gdummy1 = new TGraph();
-    gdummy1->SetFillColor(29);
-    TGraph *gdummy2 = new TGraph();
-    gdummy2->SetFillColor(38);
-    TMarker *gdummy3 = new TMarker();
-    gdummy3 -> SetMarkerStyle(3);
-    gdummy3 -> SetMarkerColor(1);
-    TMarker *gdummy4 = new TMarker();
-    gdummy4 -> SetMarkerStyle(34);
-    gdummy4 -> SetMarkerColor(1);
-    TGraph *gdummy0 = new TGraph();
-    gdummy0 -> SetFillColor(1);
-    gdummy0 -> SetFillStyle(3254);
-    TGraph *gdummy5 = new TGraph();
-    gdummy5 -> SetFillColor(kPink);
-    gdummy5 -> SetFillStyle(3001);
-    TGraph *gdummy6 = new TGraph();
-    gdummy6 -> SetMarkerStyle(33);
-
-    leg3->AddEntry(gdummy2,"LSND 90% CL","F");
-    leg3->AddEntry(gdummy1,"LSND 99% CL","F");
-    leg3->AddEntry(gdummy3,"LSND Best Fit","P*");
-    leg3->AddEntry(gdummy4,"Global Best Fit (arXiv:1303.3011)","P*");
-    leg3->AddEntry(gdummy0,"Global Fit 90% CL (arXiv:1303.3011)");
-    leg3->AddEntry(gdummy6,"Global Best Fit (arXiv:1308.5288)","P*");
-    leg3->AddEntry(gdummy5,"Global Fit 90% CL (arXiv:1308.5288)");
-
-    return leg3;
-
-  }
-
-
-  TH2D* PlotUtils::getEmptySensPlot(double sin22thmin,
-                                    double sin22thmax,
-                                    double dm2min,
-                                    double dm2max)
-  {
-    gStyle->SetOptStat(0000);
-    gStyle->SetOptFit(0000);
-    // gStyle->SetPadBorderMode(0);
-    gStyle->SetPadBottomMargin(0.16);
-    gStyle->SetPadLeftMargin(0.16);
-    gStyle->SetPadRightMargin(0.05);
-    gStyle->SetFrameBorderMode(0);
-    // gStyle->SetCanvasBorderMode(0);
-    gStyle->SetPalette(0);
-    gStyle->SetCanvasColor(0);
-    gStyle->SetPadColor(0);
-
-    static int stupidEffingRoot = 0;
-    stupidEffingRoot ++;
-
-    TH2D* hr1=new TH2D(Form("emptyPlot_%d",stupidEffingRoot),"hr1",500,sin22thmin,sin22thmax,500,dm2min,dm2max);
-    hr1->Reset();
-    hr1->SetFillColor(0);
-    hr1->SetTitle(";sin^{2} 2#theta_{#mue};#Deltam^{2} (eV^{2})");
-    hr1->GetXaxis()->SetTitleOffset(1.1);
-    hr1->GetYaxis()->SetTitleOffset(1.2);
-    hr1->GetXaxis()->SetTitleSize(0.05);
-    hr1->GetYaxis()->SetTitleSize(0.05);
-    hr1->GetXaxis()->CenterTitle();
-    hr1->GetYaxis()->CenterTitle();
-    hr1->SetStats(kFALSE);
-    return hr1;
-  }
-
-  int PlotUtils::plotGFData(TPad * c ){
-
-    std::vector<std::vector<double> > data;
-    readGFData(data);
-    
-    /*
-    // std::cout << "Printing out the chi2 map:\n";
-    // for (int dm2point = 0; dm2point < data.size(); dm2point ++){
-    //   for (int sin22thpoint = 0; sin22thpoint < data[0].size(); sin22thpoint ++){
-    //     std::cout << "data["<<dm2point<<"]["<<sin22thpoint<<"]: " 
-    //               << data[dm2point][sin22thpoint] << "\n";
-    //   }
-    //   std::cout << std::endl;
-    // } */
-
-
-
-    double min = getMinimum2D(data);
-    double bound90 = min + 4.6051;
-    // double xbins[npoints+1], ybins[npoints+1];
-
-
-    // Want to find the bottom and top edge of these regions.
-    std::vector<double> bottomEdge;
-    std::vector<double> topEdge;
-
-    // Want to loop over dm2 points and get the edge points there
-    // that's the first index in the data
-    std::cout << "Looking for bound90 = " << bound90 << " and min = " << min << std::endl;
-    std::cout << "data.size() is " << data.size() << std::endl;
-    for (unsigned int dm2index = 0; dm2index < data.size() ; dm2index ++){
-      bottomEdge.push_back(0.0);
-      topEdge.push_back(0.0);    
-      // now loop over the data inside this row of dm2 data
-      for (unsigned int sin22thindex = 1;
-           sin22thindex < data[dm2index].size() -1;
-           sin22thindex ++)
-      {
-        double thisData = data[dm2index][sin22thindex];
-        // double nextData = data[dm2index][sin22thindex+1];
-        // double prevData = data[dm2index][sin22thindex-1];
-
-        if ( thisData != 0 && thisData < bound90)
-        {
-          bottomEdge.back() = sin22thindex-1;
-          // double dm2 = pow(10.0,(dm2index*0.05 - 1.4));
-          // double sin22th = pow(10.0,(sin22thindex*0.1 - 4.01));
-          // std::cout << "Found Crossing 1 at (" << dm2index 
-          //           << ", " << sin22thindex << ") = (" << dm2 
-          //           << ", " << sin22th << "): "  << thisData << "\n";
-          break;
-        }
-        
-      }
-      for (unsigned int sin22thindex = data[dm2index].size() -1;
-           sin22thindex > 0;
-           sin22thindex --)
-      {
-        double thisData = data[dm2index][sin22thindex];
-        // double nextData = data[dm2index][sin22thindex+1];
-        // double prevData = data[dm2index][sin22thindex+1];
-        if ( thisData != 0 && thisData < bound90) 
-        {
-          // double dm2 = pow(10.0,(dm2index*0.05 - 1.4));
-          // double sin22th = pow(10.0,(sin22thindex*0.1 - 4.01));
-          // std::cout << "Found Crossing 2 at (" << dm2index 
-          //           << ", " << sin22thindex << ") = (" << dm2 
-          //           << ", " << sin22th << "): "  << thisData << "\n";
-          topEdge.back() = sin22thindex+1;
-          break;
-        }
-      }
+    thisNtuple->GetEntry(i_entry);
+    thisChi2[i_dm2][i_sin22th] = chi2_temp;
+    i_sin22th ++;
+    if (i_sin22th % (npoints+1) == 0){
+      i_sin22th = 0;
+      i_dm2 ++;
     }
-
-
-
-    double xpoints[2*bottomEdge.size()], ypoints[2*bottomEdge.size()];
-    // double xpoints_top[bottomEdge.size()], ypoints_top[bottomEdge.size()];
-    int counter = 0;
-    // int bottom_counter = 0;
-    for(unsigned int dm2index = 0; dm2index < bottomEdge.size() ; dm2index ++)
-    {
-      if (bottomEdge.at(dm2index) != 0.0){
-        // std::cout << "Found nonzero value 1: " << bottomEdge.at(dm2index) << std::endl;
-        ypoints[counter] = pow(10.0,(dm2index*0.05 - 1.4));
-        xpoints[counter] = pow(10.0,(bottomEdge[dm2index]*0.1 - 4.01));
-        counter ++;
-      }
-    }
-    for(unsigned int dm2index = bottomEdge.size() -1; dm2index > 0; dm2index --)
-    {
-      if (topEdge.at(dm2index) != 0.0) {
-        // std::cout << "Found nonzero value 2: " << topEdge.at(dm2index) << std::endl;
-        ypoints[counter] = pow(10.0,(dm2index*0.05 - 1.4));
-        xpoints[counter] = pow(10.0,(topEdge[dm2index]*0.1 - 4.01));
-        counter ++;
-      }
-    }
-    // Smooth out the y variations in the plot.
-    // Only change values if they are above or below both of their neighbors
-    // Alost add a point at the end, in the next dm2 spot, to help the smoothness
-    double smoothedCurve_x[counter+1], smoothedCurve_y[counter+1];
-    smoothedCurve_x[0] = xpoints[0]; smoothedCurve_y[0] = ypoints[0];
-    for (int index = 1; index < counter; index++){
-      // see if the y on both sides is higher
-      if (xpoints[index] <= xpoints[index+1] &&
-          xpoints[index] <= xpoints[index-1])
-      {
-        // Average the two points on either side
-        // std::cout << "Averaging at " << 
-        smoothedCurve_x[index] = 0.5*(xpoints[index-1] + xpoints[index+1]);
-      }
-      // See if both sides are lower
-      else if (xpoints[index] >= xpoints[index+1] &&
-               xpoints[index] >= xpoints[index-1])
-      {
-        smoothedCurve_x[index] = 0.5*(xpoints[index-1] + xpoints[index+1]);
-      } 
-      else { // Don't do any smoothing in this case.
-        smoothedCurve_x[index] = xpoints[index];
-      }
-      // in all cases, set the x point to the same value
-      smoothedCurve_y[index] = ypoints[index];
-    }
-
-    // for (int index = 0; index < counter; index++){
-    //   std::cout << "x: " << xpoints[index] 
-    //             << ", y: " << ypoints[index] << std::endl;
-    // }
-    // for (int index = 0; index < bottom_counter; index++){
-    //   std::cout << "Bottom x: " << xpoints_bottom[index] 
-    //             << ", bottom y: " << ypoints_bottom[index] << std::endl;
-    // }
-
-    TGraph * bottom = new TGraph(counter, smoothedCurve_x, smoothedCurve_y);
-    // TGraph * top = new TGraph(counter, xpoints, ypoints);
-
-    // bottom -> Merge(top);
-
-
-
-    // for (int i = 0; i <= 40; i++){
-    //   std::cout << "data[5]["<<i<<"]: " << data[5][i] << std::endl;
-    // }
-
-
-
-
-    // // std::cout << "\t";
-    // // for (int j = 0; j <= 41; ++j) std::cout << std::fixed << (j*0.1 - 4.01) << " \t";
-    // // std::cout << "\n";
-    // for (int i = 0; i <= 56; i++){
-    //   // std::cout << std::fixed << (i*0.05 - 1.4);
-    //   for (int j = 0; j <= 40; ++j){
-    //     // if (data[i][j] >= min && data[i][j] < bound90)
-    //     // {
-    //       double sin22th = pow(10.0,(j*0.1 - 4.01));
-    //       double dm2 = pow(10.0,(i*0.05 - 1.4));
-    //       chi2hist -> Fill(sin22th,dm2,data[i][j]);
-    //       std::cout << "Filling " << data[i][j] << " at x = " << sin22th 
-    //       << ", y = " << dm2 << std::endl;
-    //     // }
-    //   }
-    //   // std::cout << "\n";
-    // }
-
-
-    // TCanvas * d = new TCanvas("dumb","dumber", 500, 500);
-
-    c -> cd();
-
-    bottom->SetFillColor(1);
-    bottom->SetFillStyle(3254);
-    // bottom -> SetLineColor(46);
-    // bottom -> GetFillColor() -> SetAlpha(0.5);
-    std::cout << "Got to here at least ... 1aa\n";
-
-    // auto arr = chi2hist -> GetArray();
-    // chi2hist -> Smooth();
-    // chi2hist -> Smooth();
-    // chi2hist -> Draw("cont list same");
-    bottom->Draw("CF same");
-    double sin22thBF[1] = {0.013};
-    double dm2BF[1] = {0.42};
-    TGraph * bfPoint = new TGraph(1, sin22thBF, dm2BF);
-    bfPoint -> SetLineColor(2);
-    bfPoint -> SetMarkerStyle(34);
-    bfPoint -> SetMarkerColor(1);
-    bfPoint -> Draw("LP");
-    // top -> Draw("L same");
-    std::cout << "Got to here at least ... 1ab\n";
-
-    return 0;
-
+    i_entry ++;
   }
 
-  void PlotUtils::readGFData(std::vector<std::vector<double > > & result){
-    std::string path = GetEnv("LARLITE_BASEDIR");
-    path.append("/UserDev/sbn_analysis/lar1Sens/");
-    std::string data_file= path;
-    data_file.append("osc_data/dm41th14th24-app.dat");
-    // const char* data_file = "osc_data/dm41th14th24-app.dat";
+  f.Close();
+
+  return thisChi2;
+
+}
+
+
+
+void PlotUtils::lsnd_plot(TPad * c) {
+  c->cd();
+
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_dir = path;
+  data_dir.append("osc_data/");
+
+  // const char* data_dir = "osc_data/";
+  Double_t  dm2BF[] = {1.2};
+  Double_t sin22thBF[] = {0.003};
+
+  const Int_t NDATAFILES = 11;
+  const char * file_list[NDATAFILES] = {"llreg_608_1.vec",
+                                        "llreg_608_2.vec",
+                                        "llreg_608_3.vec",
+                                        "llreg_607_1.vec",
+                                        "llreg_607_2.vec",
+                                        "llreg_607_3.vec",
+                                        "llreg_607_4.vec",
+                                        "llreg_607_5.vec",
+                                        "llreg_607_6.vec",
+                                        "llreg_607_7.vec",
+                                        "llreg_607_8.vec"
+                                       };
+
+  Int_t graph_color[NDATAFILES] = {29, 29, 29, 38, 38, 38, 38, 38, 38, 38, 38};
+
+  Int_t    nlines;
+  Double_t x[500], y[500];
+  Double_t dummy(0), dummy_old(0);
+  TGraph* gr[NDATAFILES];
+  for (Int_t ifile = 0; ifile < NDATAFILES; ifile++) {
+    nlines = 0;
+    for (Int_t i = 0; i < 500; i++) {x[i] = 0.0; y[i] = 0.0;}
+    char  filename[200];
+    strcpy(filename, data_dir.c_str());
+    //printf("%s\n",filename);
+    strcat(filename, file_list[ifile]);
+    //printf("%s\n",filename);
     std::ifstream datafile;
-    std::cout << "Trying to open Global Best Fit data from: \n"
-              << "  " << data_file << std::endl;
-    datafile.open(data_file.c_str(), std::ios_base::in);
-    //check if the file is open: 
-    if (!datafile.is_open() ) {std::cerr << "readGFData.C: file not opened" <<std::endl; return;}
+    datafile.open(filename, std::ios_base::in);
+    //check if the file is open:
+    if (!datafile.is_open() ) {
+      std::cerr << "lsnd_plot: file " << filename << " not opened" << std::endl; return;
+    }
     //else {std::cout << "Successfully opened " << filename << std::endl;}
-
-    int i = 0;
-
-
-    std::vector<std::string> legend;
-    legend.push_back("DM41");
-    legend.push_back("s22thmue");
-    legend.push_back("Um4");
-    legend.push_back("chi2_NH");
-    legend.push_back("chi2_IH");
-
-    // // Setting up a container to hold the chi2 values.
-    // // There are 57 dm14 points, from -1.4 to 1.4 in steps of 0.05 inclusive;
-    // // There are 41 sin22th points from -4.01 to -0.01 in steps of 0.1 inclusive;
-    // // at each point, we marginalize over any Um4 or chi2_IH/chi2_NH
-    result.resize(57);
-    for (auto & vec : result ) vec.resize(41);
-    // // to get indices correct, the index of dm14 is (dm14 + 1.4)/0.05
-
-    std::string line;
-    while (std::getline(datafile, line))
-    {
-
-      if (*line.begin() == '#') continue;
-      if (*line.begin() == 'P') continue;
-      // std::cout << "---------------\n";
-      // std::istrinstream iss(line);
-      std::vector < std::string > splitStream;
-      reduce(line);
-      split(splitStream, line);
-      // if (splitStream.size() > 10) continue;
-      // std::cout << "Length of line (split tokens): " << splitStream.size() << "\n";
-      std::vector <double> data;
-      for (int index = 0; index < 5; index++)
-      {
-        // std::cout << "data["<< index <<"] - " << legend[index] << ": " << splitStream[index] << std::endl;
-        std::stringstream ss(splitStream[index]);
-        double temp;
-        ss >> temp;
-        // std::cout << "pushing back " << temp << std::endl;
-        data.push_back(temp);
-      }
-    //   // Now do the actual processing.
-      
-
-      unsigned int dm14index = ceil(((data[0]+ 1.4)/0.05));
-      unsigned int sin22thindex = ceil(((data[1] + 4.01)/0.1));
-
-      // std::cout << "data is " << data.size() << std::endl;
-
-
-      if (dm14index > 56) exit(-1);
-      if (sin22thindex > 40) continue;
-
-      double chi2 = fmin(data[3], data[4]);
-      if (result[dm14index][sin22thindex] == 0.0) 
-        result[dm14index][sin22thindex] = chi2;
-      else if (result[dm14index][sin22thindex] > chi2) 
-        result[dm14index][sin22thindex] = chi2;
-
-      i ++;
-
+    while (!datafile.eof()) {
+      datafile >> dummy;
+      datafile >> dummy;
+      datafile >> x[nlines];
+      datafile >> y[nlines];
+      nlines++;
+      if (dummy == dummy_old) nlines--; //if last row was empty
+      dummy_old = dummy;
     }
+
+    gr[ifile] = new TGraph(nlines, x, y);
     datafile.close();
+  }
 
-    return;
+  std::cout << "Graph start max is " << gr[0]-> GetMaximum() << std::endl;
+
+  std::cout << "Finished reading data files" << std::endl;
+  for (Int_t ifile = 0; ifile < NDATAFILES; ifile++) {
+    // Int_t graph_color[NDATAFILES] = {29, 29, 29, 38, 38, 38, 38, 38, 38, 38, 38};
+    gr[ifile]->SetFillColor(graph_color[ifile]);
+    // if (graph_color[ifile] == 38)
+    gr[ifile]->Draw("LF");
+  }
+  //Add the best fit point;
+  TGraph * bfPoint = new TGraph(1, sin22thBF, dm2BF);
+  bfPoint -> SetLineColor(2);
+  bfPoint -> SetMarkerStyle(3);
+  bfPoint -> SetMarkerColor(1);
+  bfPoint -> Draw("LP");
+
+  plotGFData(c);
+
+  // giunti_plot(c);
+
+  return;
+}
+
+void PlotUtils::miniBoone_plot_nu(TPad* c)
+{
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_dir = path;
+  data_dir.append("osc_data/mb_nu/");
+
+  std::vector<TString> file_list;
+  file_list.push_back(data_dir + "fit200_cont_90_0.txt");
+  file_list.push_back(data_dir + "fit200_cont_90_1.txt");
+  file_list.push_back(data_dir + "fit200_cont_90_2.txt");
+  // file_list.push_back(data_dir + "fit200_cont_1s.txt");
+  // file_list.push_back(data_dir + "fit200_cont_90.txt");
+  // file_list.push_back(data_dir + "fit200_cont_99.txt");
+  // file_list.push_back(data_dir + "fit200_sens_90.txt");
+
+  // Now read in the plots
+  //
+  c -> cd();
+
+  std::vector<TGraph *> graphs;
+  for (auto & file : file_list) {
+    graphs.push_back(new TGraph(file.Data()));
+    graphs.back() -> SetFillStyle(0);
+    graphs.back() -> SetMarkerColor(kGreen + 2);
+    graphs.back() -> SetMarkerSize(7);
+    graphs.back() -> Draw("P");
+  }
+
+  // graphs.at(1) -> SetFillStyle(0);
+  // graphs.at(1) -> SetFillStyle(0);
+  // graphs.at(1) -> Draw("P");
+
+  return;
+}
+
+void PlotUtils::miniBoone_plot_anu(TPad* c)
+{
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_dir = path;
+  data_dir.append("osc_data/mb_anu/");
+
+  std::vector<TString> file_list;
+  file_list.push_back(data_dir + "fit200_cont_90.txt");
+  // file_list.push_back(data_dir + "fit200_cont_90_1.txt");
+  // file_list.push_back(data_dir + "fit200_cont_90_2.txt");
+  // file_list.push_back(data_dir + "fit200_cont_1s.txt");
+  // file_list.push_back(data_dir + "fit200_cont_90.txt");
+  // file_list.push_back(data_dir + "fit200_cont_99.txt");
+  // file_list.push_back(data_dir + "fit200_sens_90.txt");
+
+  // Now read in the plots
+  //
+  c -> cd();
+
+  std::vector<TGraph *> graphs;
+  for (auto & file : file_list) {
+    graphs.push_back(new TGraph(file.Data()));
+    graphs.back() -> SetFillStyle(0);
+    graphs.back() -> SetMarkerColor(kViolet - 6);
+    graphs.back() -> SetMarkerSize(3);
+    graphs.back() -> Draw("P");
+  }
+
+  // graphs.at(1) -> SetFillStyle(0);
+  // graphs.at(1) -> SetFillStyle(0);
+  // graphs.at(1) -> Draw("P");
+
+  return;
+}
+void PlotUtils::giunti_plot(TPad* c)
+{
+
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_dir = path;
+  data_dir.append("osc_data/");
+
+  TString file = data_dir + "giunti_con-lev-sem-9000.dat";
+
+  // Now read in the plot
+  TGraph * graph = new TGraph(file.Data());
+
+  graph -> SetFillColor(kPink);
+  graph -> SetFillStyle(3001);
+
+
+  double x[1] = {0.0015};
+  double y[1] = {1.5};
+
+  TGraph * bestFit = new TGraph(1, x, y);
+  bestFit -> SetMarkerStyle(33);
+
+
+  c -> cd();
+  graph -> Draw("CF");
+  bestFit -> Draw("P");
+
+  return;
+}
+
+// adds a plot label to the current canvas
+void PlotUtils::add_plot_label(char* label, double x, double y,
+                               double size , int color,
+                               int font, int align) {
+
+  TLatex *latex = new TLatex( x, y, label );
+  latex->SetNDC();
+  latex->SetTextSize(size);
+  latex->SetTextColor(color);
+  latex->SetTextFont(font);
+  latex->SetTextAlign(align);
+  latex->Draw();
+}
+
+TLegend * PlotUtils::getMiniBooneLegend() {
+
+  TLegend* leg3 = new TLegend(0.198, 0.219, 0.342, 0.2701);
+  leg3->SetFillStyle(0);
+  leg3->SetFillColor(0);
+  leg3->SetBorderSize(0);
+  leg3->SetTextSize(0.02);
+  TGraph *gdummy1 = new TGraph();
+  gdummy1->SetLineColor(kGreen + 2);
+  gdummy1->SetLineWidth(2);
+
+
+  // gdummy1 -> SetMarkerStyle(34);
+  // gdummy1 -> SetMarkerColor(kRed +1);
+  TGraph *gdummy2 = new TGraph();
+  gdummy2->SetLineColor(kViolet - 6);
+  gdummy2->SetLineWidth(2);
+  TMarker *gdummy3 = new TMarker();
+  gdummy3 -> SetMarkerStyle(3);
+  gdummy3 -> SetMarkerColor(1);
+  TMarker *gdummy4 = new TMarker();
+  gdummy4 -> SetMarkerStyle(34);
+  gdummy4 -> SetMarkerColor(1);
+  TGraph *gdummy0 = new TGraph();
+  gdummy0 -> SetFillColor(1);
+  gdummy0 -> SetFillStyle(3254);
+  TGraph *gdummy5 = new TGraph();
+  gdummy5 -> SetFillColor(kPink);
+  gdummy5 -> SetFillStyle(3001);
+  TGraph *gdummy6 = new TGraph();
+  gdummy6 -> SetMarkerStyle(33);
+
+  // leg3->AddEntry(gdummy1,"MiniBooNE #nu 90% CL (arXiv:1207.4809)","l");
+  // leg3->AddEntry(gdummy2,"MiniBooNE #bar{#nu} 90% CL (arXiv:1207.4809)","l");
+  leg3->AddEntry(gdummy2, "LSND 90% CL", "F");
+  leg3->AddEntry(gdummy3, "LSND Best Fit", "P*");
+  leg3->AddEntry(gdummy4, "Global Best Fit (arXiv:1303.3011)", "P*");
+  leg3->AddEntry(gdummy0, "Global Fit 90% CL (arXiv:1303.3011)");
+  leg3->AddEntry(gdummy6, "Global Best Fit (arXiv:1308.5288)", "P*");
+  leg3->AddEntry(gdummy5, "Global Fit 90% CL (arXiv:1308.5288)");
+
+  return leg3;
+
+}
+
+TLegend * PlotUtils::getLSNDLegend() {
+
+  TLegend* leg3 = new TLegend(0.2, 0.2, 0.4, 0.35);
+  leg3->SetFillStyle(0);
+  leg3->SetFillColor(0);
+  leg3->SetBorderSize(0);
+  leg3->SetTextSize(0.02);
+  TGraph *gdummy1 = new TGraph();
+  gdummy1->SetFillColor(29);
+  TGraph *gdummy2 = new TGraph();
+  gdummy2->SetFillColor(38);
+  TMarker *gdummy3 = new TMarker();
+  gdummy3 -> SetMarkerStyle(3);
+  gdummy3 -> SetMarkerColor(1);
+  TMarker *gdummy4 = new TMarker();
+  gdummy4 -> SetMarkerStyle(34);
+  gdummy4 -> SetMarkerColor(1);
+  TGraph *gdummy0 = new TGraph();
+  gdummy0 -> SetFillColor(1);
+  gdummy0 -> SetFillStyle(3254);
+  TGraph *gdummy5 = new TGraph();
+  gdummy5 -> SetFillColor(kPink);
+  gdummy5 -> SetFillStyle(3001);
+  TGraph *gdummy6 = new TGraph();
+  gdummy6 -> SetMarkerStyle(33);
+
+  leg3->AddEntry(gdummy2, "LSND 90% CL", "F");
+  leg3->AddEntry(gdummy1, "LSND 99% CL", "F");
+  leg3->AddEntry(gdummy3, "LSND Best Fit", "P*");
+  leg3->AddEntry(gdummy4, "Global Best Fit (arXiv:1303.3011)", "P*");
+  leg3->AddEntry(gdummy0, "Global Fit 90% CL (arXiv:1303.3011)");
+  leg3->AddEntry(gdummy6, "Global Best Fit (arXiv:1308.5288)", "P*");
+  leg3->AddEntry(gdummy5, "Global Fit 90% CL (arXiv:1308.5288)");
+
+  return leg3;
+
+}
+
+
+TH2D* PlotUtils::getEmptySensPlot(double sin22thmin,
+                                  double sin22thmax,
+                                  double dm2min,
+                                  double dm2max)
+{
+  gStyle->SetOptStat(0000);
+  gStyle->SetOptFit(0000);
+  // gStyle->SetPadBorderMode(0);
+  gStyle->SetPadBottomMargin(0.16);
+  gStyle->SetPadLeftMargin(0.16);
+  gStyle->SetPadRightMargin(0.05);
+  gStyle->SetFrameBorderMode(0);
+  // gStyle->SetCanvasBorderMode(0);
+  gStyle->SetPalette(0);
+  gStyle->SetCanvasColor(0);
+  gStyle->SetPadColor(0);
+
+  static int stupidEffingRoot = 0;
+  stupidEffingRoot ++;
+
+  TH2D* hr1 = new TH2D(Form("emptyPlot_%d", stupidEffingRoot), "hr1", 500, sin22thmin, sin22thmax, 500, dm2min, dm2max);
+  hr1->Reset();
+  hr1->SetFillColor(0);
+  hr1->SetTitle(";sin^{2} 2#theta_{#mue};#Deltam^{2} (eV^{2})");
+  hr1->GetXaxis()->SetTitleOffset(1.1);
+  hr1->GetYaxis()->SetTitleOffset(1.2);
+  hr1->GetXaxis()->SetTitleSize(0.05);
+  hr1->GetYaxis()->SetTitleSize(0.05);
+  hr1->GetXaxis()->CenterTitle();
+  hr1->GetYaxis()->CenterTitle();
+  hr1->SetStats(kFALSE);
+  return hr1;
+}
+
+int PlotUtils::plotGFData(TPad * c ) {
+
+  std::vector<std::vector<double> > data;
+  readGFData(data);
+
+  /*
+  // std::cout << "Printing out the chi2 map:\n";
+  // for (int dm2point = 0; dm2point < data.size(); dm2point ++){
+  //   for (int sin22thpoint = 0; sin22thpoint < data[0].size(); sin22thpoint ++){
+  //     std::cout << "data["<<dm2point<<"]["<<sin22thpoint<<"]: "
+  //               << data[dm2point][sin22thpoint] << "\n";
+  //   }
+  //   std::cout << std::endl;
+  // } */
+
+
+
+  double min = getMinimum2D(data);
+  double bound90 = min + 4.6051;
+  // double xbins[npoints+1], ybins[npoints+1];
+
+
+  // Want to find the bottom and top edge of these regions.
+  std::vector<double> bottomEdge;
+  std::vector<double> topEdge;
+
+  // Want to loop over dm2 points and get the edge points there
+  // that's the first index in the data
+  // std::cout << "Looking for bound90 = " << bound90 << " and min = " << min << std::endl;
+  // std::cout << "data.size() is " << data.size() << std::endl;
+  for (unsigned int dm2index = 0; dm2index < data.size() ; dm2index ++) {
+    bottomEdge.push_back(0.0);
+    topEdge.push_back(0.0);
+    // now loop over the data inside this row of dm2 data
+    for (unsigned int sin22thindex = 1;
+         sin22thindex < data[dm2index].size() - 1;
+         sin22thindex ++)
+    {
+      double thisData = data[dm2index][sin22thindex];
+      // double nextData = data[dm2index][sin22thindex+1];
+      // double prevData = data[dm2index][sin22thindex-1];
+
+      if ( thisData != 0 && thisData < bound90)
+      {
+        bottomEdge.back() = sin22thindex - 1;
+        // double dm2 = pow(10.0,(dm2index*0.05 - 1.4));
+        // double sin22th = pow(10.0,(sin22thindex*0.1 - 4.01));
+        // std::cout << "Found Crossing 1 at (" << dm2index
+        //           << ", " << sin22thindex << ") = (" << dm2
+        //           << ", " << sin22th << "): "  << thisData << "\n";
+        break;
+      }
+
+    }
+    for (unsigned int sin22thindex = data[dm2index].size() - 1;
+         sin22thindex > 0;
+         sin22thindex --)
+    {
+      double thisData = data[dm2index][sin22thindex];
+      // double nextData = data[dm2index][sin22thindex+1];
+      // double prevData = data[dm2index][sin22thindex+1];
+      if ( thisData != 0 && thisData < bound90)
+      {
+        // double dm2 = pow(10.0,(dm2index*0.05 - 1.4));
+        // double sin22th = pow(10.0,(sin22thindex*0.1 - 4.01));
+        // std::cout << "Found Crossing 2 at (" << dm2index
+        //           << ", " << sin22thindex << ") = (" << dm2
+        //           << ", " << sin22th << "): "  << thisData << "\n";
+        topEdge.back() = sin22thindex + 1;
+        break;
+      }
+    }
   }
 
 
-  void PlotUtils::reduce(std::string & s, char delim)
+
+  double xpoints[2 * bottomEdge.size()], ypoints[2 * bottomEdge.size()];
+  // double xpoints_top[bottomEdge.size()], ypoints_top[bottomEdge.size()];
+  int counter = 0;
+  // int bottom_counter = 0;
+  for (unsigned int dm2index = 0; dm2index < bottomEdge.size() ; dm2index ++)
   {
-    if (s.size() == 0)
-      return;
-    // Useful code to remove all consecutive duplicates:
-    // for (auto ch = s.begin() + 1; ch != s.end(); ++ ch)
-    // {
-    //   if (*ch == *(ch -1)) s.erase(ch);
-    // }
-    for (auto ch = s.begin() + 1; ch != s.end(); ++ ch)
-    {
-      if (*ch == delim && *(ch -1) == delim){
-        s.erase(ch);
-        ch --;
-      }
+    if (bottomEdge.at(dm2index) != 0.0) {
+      // std::cout << "Found nonzero value 1: " << bottomEdge.at(dm2index) << std::endl;
+      ypoints[counter] = pow(10.0, (dm2index * 0.05 - 1.4));
+      xpoints[counter] = pow(10.0, (bottomEdge[dm2index] * 0.1 - 4.01));
+      counter ++;
     }
-    // std::cout << s << "\n";
   }
-
-  void PlotUtils::split(std::vector<std::string> &fields, std::string s, char delim){
-    if (fields.size() != 0) {
-      fields.clear();
-    }
-    
-    size_t found, previous = 0;
-    
-    // if the leading token is a delimeter, remove it:
-    if (*s.begin() == delim) s.erase(s.begin());
-
-    //find the first delimeter:
-    found = s.find_first_of(delim);
-    
-    while (found!=std::string::npos)
-    {
-      
-      //add the first instance into the vector:
-      if (previous == 0) {
-        fields.push_back(s.substr(previous, found - previous));
-      }
-      else fields.push_back(s.substr(previous + 1 , found  - previous - 1));
-      //save where the previous delim was:
-      previous = found;
-      //search for another comma, starting just after where the previous left off.
-      found=s.find_first_of(delim,found+1);
-    }
-    
-    //get the last section of the line:
-    fields.push_back(s.substr(previous + 1));
-    
-    return;
-  }
-
-  double PlotUtils::getMinimum2D(std::vector<std::vector<double> > & s)
+  for (unsigned int dm2index = bottomEdge.size() - 1; dm2index > 0; dm2index --)
   {
-    double min = 1e20;
-    for (auto & dim1 : s)
+    if (topEdge.at(dm2index) != 0.0) {
+      // std::cout << "Found nonzero value 2: " << topEdge.at(dm2index) << std::endl;
+      ypoints[counter] = pow(10.0, (dm2index * 0.05 - 1.4));
+      xpoints[counter] = pow(10.0, (topEdge[dm2index] * 0.1 - 4.01));
+      counter ++;
+    }
+  }
+  // Smooth out the y variations in the plot.
+  // Only change values if they are above or below both of their neighbors
+  // Alost add a point at the end, in the next dm2 spot, to help the smoothness
+  double smoothedCurve_x[counter + 1], smoothedCurve_y[counter + 1];
+  smoothedCurve_x[0] = xpoints[0]; smoothedCurve_y[0] = ypoints[0];
+  for (int index = 1; index < counter; index++) {
+    // see if the y on both sides is higher
+    if (xpoints[index] <= xpoints[index + 1] &&
+        xpoints[index] <= xpoints[index - 1])
     {
-      for (auto & dim2 : dim1){
-        if (dim2 != 0 && dim2 < min) min = dim2;
-      }
+      // Average the two points on either side
+      // std::cout << "Averaging at " <<
+      smoothedCurve_x[index] = 0.5 * (xpoints[index - 1] + xpoints[index + 1]);
     }
-    return min;
+    // See if both sides are lower
+    else if (xpoints[index] >= xpoints[index + 1] &&
+             xpoints[index] >= xpoints[index - 1])
+    {
+      smoothedCurve_x[index] = 0.5 * (xpoints[index - 1] + xpoints[index + 1]);
+    }
+    else { // Don't do any smoothing in this case.
+      smoothedCurve_x[index] = xpoints[index];
+    }
+    // in all cases, set the x point to the same value
+    smoothedCurve_y[index] = ypoints[index];
   }
-  std::string PlotUtils::GetEnv( const std::string & var ){
-    const char * val = std::getenv( var.c_str() );
-    if ( val == 0 ) {
-        return "";
+
+  // for (int index = 0; index < counter; index++){
+  //   std::cout << "x: " << xpoints[index]
+  //             << ", y: " << ypoints[index] << std::endl;
+  // }
+  // for (int index = 0; index < bottom_counter; index++){
+  //   std::cout << "Bottom x: " << xpoints_bottom[index]
+  //             << ", bottom y: " << ypoints_bottom[index] << std::endl;
+  // }
+
+  TGraph * bottom = new TGraph(counter, smoothedCurve_x, smoothedCurve_y);
+  // TGraph * top = new TGraph(counter, xpoints, ypoints);
+
+  // bottom -> Merge(top);
+
+
+
+  // for (int i = 0; i <= 40; i++){
+  //   std::cout << "data[5]["<<i<<"]: " << data[5][i] << std::endl;
+  // }
+
+
+
+
+  // // std::cout << "\t";
+  // // for (int j = 0; j <= 41; ++j) std::cout << std::fixed << (j*0.1 - 4.01) << " \t";
+  // // std::cout << "\n";
+  // for (int i = 0; i <= 56; i++){
+  //   // std::cout << std::fixed << (i*0.05 - 1.4);
+  //   for (int j = 0; j <= 40; ++j){
+  //     // if (data[i][j] >= min && data[i][j] < bound90)
+  //     // {
+  //       double sin22th = pow(10.0,(j*0.1 - 4.01));
+  //       double dm2 = pow(10.0,(i*0.05 - 1.4));
+  //       chi2hist -> Fill(sin22th,dm2,data[i][j]);
+  //       std::cout << "Filling " << data[i][j] << " at x = " << sin22th
+  //       << ", y = " << dm2 << std::endl;
+  //     // }
+  //   }
+  //   // std::cout << "\n";
+  // }
+
+
+  // TCanvas * d = new TCanvas("dumb","dumber", 500, 500);
+
+  c -> cd();
+
+  bottom->SetFillColor(1);
+  bottom->SetFillStyle(3254);
+  // bottom -> SetLineColor(46);
+  // bottom -> GetFillColor() -> SetAlpha(0.5);
+
+  // auto arr = chi2hist -> GetArray();
+  // chi2hist -> Smooth();
+  // chi2hist -> Smooth();
+  // chi2hist -> Draw("cont list same");
+  bottom->Draw("CF same");
+  double sin22thBF[1] = {0.013};
+  double dm2BF[1] = {0.42};
+  TGraph * bfPoint = new TGraph(1, sin22thBF, dm2BF);
+  bfPoint -> SetLineColor(2);
+  bfPoint -> SetMarkerStyle(34);
+  bfPoint -> SetMarkerColor(1);
+  bfPoint -> Draw("LP");
+  // top -> Draw("L same");
+
+  return 0;
+
+}
+
+void PlotUtils::readGFData(std::vector<std::vector<double > > & result) {
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_file = path;
+  data_file.append("osc_data/dm41th14th24-app.dat");
+  // const char* data_file = "osc_data/dm41th14th24-app.dat";
+  std::ifstream datafile;
+  std::cout << "Trying to open Global Best Fit data from: \n"
+            << "  " << data_file << std::endl;
+  datafile.open(data_file.c_str(), std::ios_base::in);
+  //check if the file is open:
+  if (!datafile.is_open() ) {std::cerr << "readGFData.C: file not opened" << std::endl; return;}
+  //else {std::cout << "Successfully opened " << filename << std::endl;}
+
+  int i = 0;
+
+
+  std::vector<std::string> legend;
+  legend.push_back("DM41");
+  legend.push_back("s22thmue");
+  legend.push_back("Um4");
+  legend.push_back("chi2_NH");
+  legend.push_back("chi2_IH");
+
+  // // Setting up a container to hold the chi2 values.
+  // // There are 57 dm14 points, from -1.4 to 1.4 in steps of 0.05 inclusive;
+  // // There are 41 sin22th points from -4.01 to -0.01 in steps of 0.1 inclusive;
+  // // at each point, we marginalize over any Um4 or chi2_IH/chi2_NH
+  result.resize(57);
+  for (auto & vec : result ) vec.resize(41);
+  // // to get indices correct, the index of dm14 is (dm14 + 1.4)/0.05
+
+  std::string line;
+  while (std::getline(datafile, line))
+  {
+
+    if (*line.begin() == '#') continue;
+    if (*line.begin() == 'P') continue;
+    // std::cout << "---------------\n";
+    // std::istrinstream iss(line);
+    std::vector < std::string > splitStream;
+    reduce(line);
+    split(splitStream, line);
+    // if (splitStream.size() > 10) continue;
+    // std::cout << "Length of line (split tokens): " << splitStream.size() << "\n";
+    std::vector <double> data;
+    for (int index = 0; index < 5; index++)
+    {
+      // std::cout << "data["<< index <<"] - " << legend[index] << ": " << splitStream[index] << std::endl;
+      std::stringstream ss(splitStream[index]);
+      double temp;
+      ss >> temp;
+      // std::cout << "pushing back " << temp << std::endl;
+      data.push_back(temp);
     }
-    else {
-        return val;
+    //   // Now do the actual processing.
+
+
+    unsigned int dm14index = ceil(((data[0] + 1.4) / 0.05));
+    unsigned int sin22thindex = ceil(((data[1] + 4.01) / 0.1));
+
+    // std::cout << "data is " << data.size() << std::endl;
+
+
+    if (dm14index > 56) exit(-1);
+    if (sin22thindex > 40) continue;
+
+    double chi2 = fmin(data[3], data[4]);
+    if (result[dm14index][sin22thindex] == 0.0)
+      result[dm14index][sin22thindex] = chi2;
+    else if (result[dm14index][sin22thindex] > chi2)
+      result[dm14index][sin22thindex] = chi2;
+
+    i ++;
+
+  }
+  datafile.close();
+
+  return;
+}
+
+
+void PlotUtils::reduce(std::string & s, char delim)
+{
+  if (s.size() == 0)
+    return;
+  // Useful code to remove all consecutive duplicates:
+  // for (auto ch = s.begin() + 1; ch != s.end(); ++ ch)
+  // {
+  //   if (*ch == *(ch -1)) s.erase(ch);
+  // }
+  for (auto ch = s.begin() + 1; ch != s.end(); ++ ch)
+  {
+    if (*ch == delim && *(ch - 1) == delim) {
+      s.erase(ch);
+      ch --;
     }
   }
+  // std::cout << s << "\n";
+}
+
+void PlotUtils::split(std::vector<std::string> &fields, std::string s, char delim) {
+  if (fields.size() != 0) {
+    fields.clear();
+  }
+
+  size_t found, previous = 0;
+
+  // if the leading token is a delimeter, remove it:
+  if (*s.begin() == delim) s.erase(s.begin());
+
+  //find the first delimeter:
+  found = s.find_first_of(delim);
+
+  while (found != std::string::npos)
+  {
+
+    //add the first instance into the vector:
+    if (previous == 0) {
+      fields.push_back(s.substr(previous, found - previous));
+    }
+    else fields.push_back(s.substr(previous + 1 , found  - previous - 1));
+    //save where the previous delim was:
+    previous = found;
+    //search for another comma, starting just after where the previous left off.
+    found = s.find_first_of(delim, found + 1);
+  }
+
+  //get the last section of the line:
+  fields.push_back(s.substr(previous + 1));
+
+  return;
+}
+
+double PlotUtils::getMinimum2D(std::vector<std::vector<double> > & s)
+{
+  double min = 1e20;
+  for (auto & dim1 : s)
+  {
+    for (auto & dim2 : dim1) {
+      if (dim2 != 0 && dim2 < min) min = dim2;
+    }
+  }
+  return min;
+}
+std::string PlotUtils::GetEnv( const std::string & var ) {
+  const char * val = std::getenv( var.c_str() );
+  if ( val == 0 ) {
+    return "";
+  }
+  else {
+    return val;
+  }
+}
 
 std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
-                    std::vector<float> dm2points,
-                    std::vector<float> sin22thpoints){
+    std::vector<float> dm2points,
+    std::vector<float> sin22thpoints) {
 
   // Get at the underlying array from the vectors, to set up the bins:
   float * xbins = & sin22thpoints[0];
   float * ybins = & dm2points[0];
 
   // for (auto & x : sin22thpoints) std::cout << "x: " << x << std::endl;
-  std::string path = GetEnv("MAKE_TOP_DIR");
-  path.append("/UserDev/lar1Sens/");
-  std::string data_dir= path;
+  std::string path = GetEnv("LARLITE_BASEDIR");
+  path.append("/UserDev/sbn_analysis/lar1Sens/");
+  std::string data_dir = path;
   data_dir.append("osc_data/");
 
-  TH2D * LSND_Data = new TH2D("data","data", npoints,xbins, npoints, ybins);
+  TH2D * LSND_Data = new TH2D("data", "data", npoints, xbins, npoints, ybins);
 
   const Int_t NDATAFILES = 11;
   const char * file_list[NDATAFILES] = {"llreg_608_1.vec",
-               "llreg_608_2.vec",
-               "llreg_608_3.vec",
-               "llreg_607_1.vec",
-               "llreg_607_2.vec",
-               "llreg_607_3.vec",
-               "llreg_607_4.vec",
-               "llreg_607_5.vec",
-               "llreg_607_6.vec",
-               "llreg_607_7.vec",
-               "llreg_607_8.vec"};
+                                        "llreg_608_2.vec",
+                                        "llreg_608_3.vec",
+                                        "llreg_607_1.vec",
+                                        "llreg_607_2.vec",
+                                        "llreg_607_3.vec",
+                                        "llreg_607_4.vec",
+                                        "llreg_607_5.vec",
+                                        "llreg_607_6.vec",
+                                        "llreg_607_7.vec",
+                                        "llreg_607_8.vec"
+                                       };
 
   Int_t    nlines;
   Double_t dummy, dummy_old;
   Double_t x(0), y(0);
-  for (Int_t ifile = 0; ifile<NDATAFILES; ifile++) {
+  for (Int_t ifile = 0; ifile < NDATAFILES; ifile++) {
     nlines = 0;
     char  filename[100];
     strcpy(filename, data_dir.c_str());
@@ -716,15 +760,15 @@ std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
     //printf("%s\n",filename);
     std::ifstream datafile;
     datafile.open(filename, std::ios_base::in);
-    //check if the file is open: 
-    if (!datafile.is_open() ) {std::cerr << "lsnd_plot.C: file not opened" <<std::endl;}
+    //check if the file is open:
+    if (!datafile.is_open() ) {std::cerr << "lsnd_plot.C: file not opened" << std::endl;}
     //else {std::cout << "Successfully opened " << filename << std::endl;}
     while (!datafile.eof()) {
-      datafile >> dummy; 
-      datafile >> dummy; 
-      datafile >> x; 
+      datafile >> dummy;
+      datafile >> dummy;
+      datafile >> x;
       datafile >> y;
-      LSND_Data -> Fill(x,y);
+      LSND_Data -> Fill(x, y);
       nlines++;
       if (dummy == dummy_old) nlines--; //if last row was empty
       dummy_old = dummy;
@@ -732,16 +776,16 @@ std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
     datafile.close();
   }
 
-  std::vector<int> sin22thresult(npoints+1, 0.0);
+  std::vector<int> sin22thresult(npoints + 1, 0.0);
 
   // Now loop over the hist in y points and find the first point where the bins are filled:
-  for (int i_dm2 = npoints+1; i_dm2 >= 1; i_dm2--)
-  // for (int i_dm2 = 1; i_dm2 <= npoints+1; i_dm2++)
+  for (int i_dm2 = npoints + 1; i_dm2 >= 1; i_dm2--)
+    // for (int i_dm2 = 1; i_dm2 <= npoints+1; i_dm2++)
   {
-    for (int i_sin22th = npoints+1; i_sin22th > 0; i_sin22th--)
+    for (int i_sin22th = npoints + 1; i_sin22th > 0; i_sin22th--)
     {
-      if (LSND_Data -> GetBinContent(i_sin22th,i_dm2) > 0) 
-        sin22thresult.at(i_dm2-1) = i_sin22th;
+      if (LSND_Data -> GetBinContent(i_sin22th, i_dm2) > 0)
+        sin22thresult.at(i_dm2 - 1) = i_sin22th;
     }
     // if (sin22thresult.at(i_dm2-1) == 0) {
     //   if (i_dm2 != 1 ) sin22thresult.at(i_dm2-1) = sin22thresult.at(i_dm2);
@@ -751,13 +795,13 @@ std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
 
   // Loop over the result once and fill in any gaps where there is just one
   // point that came out to be 0:
-  for (int i = 1; i < npoints+1; ++i)
+  for (int i = 1; i < npoints + 1; ++i)
   {
-    if (sin22thresult.at(i) == 0){
-      if (sin22thresult.at(i-1) != 0 &&
-          sin22thresult.at(i+1) != 0 )
+    if (sin22thresult.at(i) == 0) {
+      if (sin22thresult.at(i - 1) != 0 &&
+          sin22thresult.at(i + 1) != 0 )
       {
-        sin22thresult.at(i) = (int) ((sin22thresult.at(i-1) + sin22thresult.at(i+1))/2.0);
+        sin22thresult.at(i) = (int) ((sin22thresult.at(i - 1) + sin22thresult.at(i + 1)) / 2.0);
       }
     }
   }
@@ -768,7 +812,7 @@ std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
   // Need to validate that this works:
   // float xpoints[npoints+1];
   // float ypoints[npoints+1];
-  
+
   // Pass it to a function to interpolate between constant sections.
   // refine(sin22thresult);
 
@@ -781,8 +825,8 @@ std::vector<int> PlotUtils::Bin_LSND_Data( int npoints,
 
 
   // for (int i = 0; i <= npoints; i++)
-  //   std::cout << "Line along dm2 = " << dm2points[i] 
-  //             << ",\tsin22th = " << sin22thpoints[sin22thresult[i]] 
+  //   std::cout << "Line along dm2 = " << dm2points[i]
+  //             << ",\tsin22th = " << sin22thpoints[sin22thresult[i]]
   //             << std::endl;
 
 
@@ -817,7 +861,7 @@ void PlotUtils::plot_Matrix( TString matrixFileName,
   if (use470m) nueEventRates.push_back( (TH1F*) f-> Get("nueEventRates_470m")-> Clone());
   if (use600m) nueEventRates.push_back( (TH1F*) f-> Get("nueEventRates_600m_onaxis")-> Clone());
   if (!use100m && !use470m && !use600m) {
-    std::cerr << "You seem to be providing a file that " 
+    std::cerr << "You seem to be providing a file that "
               << "doesn't conform to standard format.\n";
     exit (-1);
   }
@@ -844,34 +888,34 @@ void PlotUtils::plot_Matrix( TString matrixFileName,
       numuEventRates.push_back( (TH1F*) tempHist-> Clone());
   }
 
-  if (numuEventRates.size() != 0){
+  if (numuEventRates.size() != 0) {
     nBins_numu = numuEventRates.front() -> GetNbinsX();
   }
 
 
 
 
-  TCanvas * canv = plot_Matrix( matrix, matrixName, 
-                                use100m, use470m, use600m, 
+  TCanvas * canv = plot_Matrix( matrix, matrixName,
+                                use100m, use470m, use600m,
                                 nBins_nue, nBins_numu);
   // for the name of the pdf file to print:
-  matrixFileName.Remove(matrixFileName.Length()-5); // chop off ".root"
+  matrixFileName.Remove(matrixFileName.Length() - 5); // chop off ".root"
   TString outName = matrixFileName;
   outName += "_" + matrixName + ".pdf";
-  canv -> Print(outName,"pdf");
+  canv -> Print(outName, "pdf");
 
-  if (matrixName == "fracMatHist"){
+  if (matrixName == "fracMatHist") {
     // std::vector<TCanvas*> canvases = plotRatesWithErrors(matrix,
     //                                                      nueEventRates,
     //                                                      numuEventRates);
-    std::vector<TCanvas *> Uncerts = plotFractionalUncerts(matrix, 
-                                                 nueEventRates,
-                                                 numuEventRates,
-                                                 matrixFileName);
+    std::vector<TCanvas *> Uncerts = plotFractionalUncerts(matrix,
+                                     nueEventRates,
+                                     numuEventRates,
+                                     matrixFileName);
 
-    Uncerts.front() -> Print(matrixFileName+"_nue_uncerts.pdf","pdf");
+    Uncerts.front() -> Print(matrixFileName + "_nue_uncerts.pdf", "pdf");
     if (numuEventRates.size() != 0)
-      Uncerts.back() -> Print(matrixFileName+"_numu_uncerts.pdf","pdf"); 
+      Uncerts.back() -> Print(matrixFileName + "_numu_uncerts.pdf", "pdf");
 
   }
 
@@ -880,27 +924,46 @@ void PlotUtils::plot_Matrix( TString matrixFileName,
 
 }
 
+TCanvas * PlotUtils::plotFractionalUncertsNue(TH2D * matrix,
+    std::vector<TH1F> nueRates,
+    TString matrixFileName) {
+
+  std::vector<TH1F *> nueRatesPtrs(3);
+  std::vector<TH1F *> numuRatesPtrs;
+
+  for (size_t i = 0; i < nueRates.size(); i++ ) {
+    nueRatesPtrs.at(i) = ((TH1F*) nueRates.at(i).Clone());
+  }
+
+  std::vector<TCanvas* > canvs =  plotFractionalUncerts(matrix, nueRatesPtrs, numuRatesPtrs, matrixFileName);
+  return canvs.front();
+
+}
+
 std::vector<TCanvas *> PlotUtils::plotFractionalUncerts(TH2D * matrix,
-                                          std::vector<TH1F*> nueRates,
-                                          std::vector<TH1F*> numuRates,
-                                          TString matrixFileName){
+    std::vector<TH1F*> nueRates,
+    std::vector<TH1F*> numuRates,
+    TString matrixFileName) {
 
   // Set up the canvas and a background histogram to control the appearance
 
+
   std::vector<TCanvas *> uncerts;
-  uncerts.push_back(new TCanvas("nueUncerts","",800,600));
+  uncerts.push_back(new TCanvas("nueUncerts", "", 800, 600));
 
   if (numuRates.size() != 0)
-    uncerts.push_back(new TCanvas("numuUncerts","",800,600));
+    uncerts.push_back(new TCanvas("numuUncerts", "", 800, 600));
 
-  
+
   std::vector<TH1F *> background;
   background.reserve(2);
   background.front() = (TH1F*) nueRates.front() -> Clone();
 
-  for (int i = 1; i <= background.front()->GetNbinsX();i++) 
-    background.front() -> SetBinContent(i,0);
-  
+
+
+  for (int i = 1; i <= background.front()->GetNbinsX(); i++)
+    background.front() -> SetBinContent(i, 0);
+
 
   background.front() -> SetMinimum(0.0);
   background.front() -> SetMaximum(25);
@@ -912,36 +975,38 @@ std::vector<TCanvas *> PlotUtils::plotFractionalUncerts(TH2D * matrix,
   background.front() -> GetXaxis() -> SetTitleSize(.05);
   background.front() -> GetYaxis() -> SetTitleSize(.045);
   background.front() -> GetYaxis() -> SetTitleOffset(1.6);
-  
+
   background.back() = (TH1F*) background.front() -> Clone();
 
-  if (matrixFileName.Contains("xsec")){
+  if (matrixFileName.Contains("xsec")) {
     background.front() -> SetTitle("#nu_{e} Cross Section Fractional Uncertaintes");
     background.back()  -> SetTitle("#nu_{#mu} Cross Section Fractional Uncertaintes");
   }
-  else if (matrixFileName.Contains("flux")){
+  else if (matrixFileName.Contains("flux")) {
     background.front() -> SetTitle("#nu_{e} Flux Fractional Uncertaintes");
     background.back()  -> SetTitle("#nu_{#mu} Flux Fractional Uncertaintes");
   }
-  else{
+  else {
     background.front() -> SetTitle("#nu_{e} Fractional Uncertaintes");
     background.back()  -> SetTitle("#nu_{#mu} Fractional Uncertaintes");
-  }  
+  }
+
 
   uncerts.front() -> cd();
   background.front() -> Draw();
-  if (numuRates.size() != 0){
+  if (numuRates.size() != 0) {
     uncerts.back() ->cd();
     background.back() -> Draw();
   }
 
 
-  TLegend * leg = new TLegend(0.6,0.65,0.95,0.8);
+  TLegend * leg = new TLegend(0.6, 0.65, 0.95, 0.8);
   leg -> SetFillStyle(0);
   leg -> SetFillColor(0);
   leg -> SetBorderSize(0);
   leg -> SetTextSize(0.05);
   int curr_bin = 1;
+
   for (unsigned int iDet = 0; iDet < nueRates.size(); iDet ++)
   {
 
@@ -950,29 +1015,29 @@ std::vector<TCanvas *> PlotUtils::plotFractionalUncerts(TH2D * matrix,
 
     TH1F * tempHist = (TH1F*) nueRates.at(iDet) -> Clone();
     // Set up the plot to look nice...
-    for (int iBin = 1; iBin <= nueRates.at(iDet)->GetNbinsX(); iBin ++){
-      tempHist -> SetBinContent(iBin, 100*sqrt(matrix->GetBinContent(curr_bin,curr_bin)));
+    for (int iBin = 1; iBin <= nueRates.at(iDet)->GetNbinsX(); iBin ++) {
+      tempHist -> SetBinContent(iBin, 100 * sqrt(matrix->GetBinContent(curr_bin, curr_bin)));
       tempHist -> SetBinError(iBin, 0);
       curr_bin ++;
     }
 
     TString thisName = nueRates.at(iDet) -> GetName();
-    if (thisName.Contains("100m")){
-      // temphist -> SetLineWidth("#nu_{e} Rates at LAr1-ND");
+    if (thisName.Contains("100m")) {
+      // temphist -> SetLineWidth("#nu_{e} Rates at SBND");
       tempHist -> SetLineWidth(1);
       tempHist -> SetLineStyle(2);
       // tempHist -> SetMarkerStyle(8);
       // tempHist -> SetMarkerColor(1);
       tempHist -> Draw("same");
-      leg -> AddEntry(tempHist,"LAr1-ND");
+      leg -> AddEntry(tempHist, "SBND");
     }
-    if (thisName.Contains("470m")){
+    if (thisName.Contains("470m")) {
       tempHist -> SetLineWidth(0);
       tempHist -> SetMarkerStyle(3);
       tempHist -> SetMarkerColor(2);
       // rates.at(iDet) -> SetTitle("#nu_{e} Rates at MicroBooNE");
       tempHist -> Draw("P same");
-      leg -> AddEntry(tempHist,"uBooNE");
+      leg -> AddEntry(tempHist, "uBooNE");
     }
     if (thisName.Contains("600m")) {
       tempHist -> SetLineWidth(0);
@@ -980,35 +1045,35 @@ std::vector<TCanvas *> PlotUtils::plotFractionalUncerts(TH2D * matrix,
       tempHist -> SetMarkerColor(4);
       // rates.at(iDet) -> SetTitle("#nu_{e} Rates at T600");
       tempHist -> Draw("P same");
-      leg -> AddEntry(tempHist,"T600");
+      leg -> AddEntry(tempHist, "T600");
     }
 
     leg -> Draw();
 
     // do numu if it exists:
-    if (numuRates.size() != 0){
+    if (numuRates.size() != 0) {
       uncerts.back()->cd();
 
       TH1F * tempHist = (TH1F*) numuRates.at(iDet) -> Clone();
-      
-      for (int iBin = 1; iBin <= numuRates.at(iDet)->GetNbinsX(); iBin ++){
-        tempHist -> SetBinContent(iBin, 100*sqrt(matrix->GetBinContent(curr_bin,curr_bin)));
+
+      for (int iBin = 1; iBin <= numuRates.at(iDet)->GetNbinsX(); iBin ++) {
+        tempHist -> SetBinContent(iBin, 100 * sqrt(matrix->GetBinContent(curr_bin, curr_bin)));
         tempHist -> SetBinError(iBin, 0);
         curr_bin ++;
       }
-      
+
       // Set up the plot to look nice...
       TString thisName = numuRates.at(iDet) -> GetName();
-      if (thisName.Contains("100m")){
-        // temphist -> SetLineWidth("#nu_{e} Rates at LAr1-ND");
+      if (thisName.Contains("100m")) {
+        // temphist -> SetLineWidth("#nu_{e} Rates at SBND");
         tempHist -> SetLineWidth(1);
         tempHist -> SetLineStyle(2);
         // tempHist -> SetMarkerStyle(8);
         // tempHist -> SetMarkerColor(1);
         tempHist -> Draw("same");
-        // leg -> AddEntry(tempHist,"LAr1-ND");
+        // leg -> AddEntry(tempHist,"SBND");
       }
-      if (thisName.Contains("470m")){
+      if (thisName.Contains("470m")) {
         tempHist -> SetLineWidth(0);
         tempHist -> SetMarkerStyle(3);
         tempHist -> SetMarkerColor(2);
@@ -1031,38 +1096,38 @@ std::vector<TCanvas *> PlotUtils::plotFractionalUncerts(TH2D * matrix,
   }
 
 
-  return uncerts;
+            return uncerts;
 
 }
-                                          
+
 
 std::vector<TCanvas *> PlotUtils::plotRatesWithErrors(TH2D * matrix,
-                                                      std::vector<TH1F*> nueRates,
-                                                      std::vector<TH1F*> numuRates)
+    std::vector<TH1F*> nueRates,
+    std::vector<TH1F*> numuRates)
 {
   std::vector <TCanvas *> canvases;
   int curr_bin = 1;
 
   for (unsigned int iDet = 0; iDet < nueRates.size(); iDet ++)
   {
-    canvases.push_back(new TCanvas(Form("canv_nue_%u",iDet),"", 500,400));
+    canvases.push_back(new TCanvas(Form("canv_nue_%u", iDet), "", 500, 400));
     canvases.back() -> cd();
 
     // TH1F * tempHist = (TH1F*) nueRates.at(iDet) -> Clone();
 
     // Set the bin errors to be systematic uncertainties
-    for (int iBin = 1; iBin <= nueRates.at(iDet)->GetNbinsX(); iBin ++){
-      nueRates.at(iDet)->SetBinContent(iBin, nueRates.at(iDet)->GetBinContent(iBin) 
-                                           / nueRates.at(iDet)->GetBinWidth(iBin) );
-      nueRates.at(iDet)->SetBinError(iBin, sqrt(matrix->GetBinContent(curr_bin,curr_bin))
-                                         * nueRates.at(iDet)->GetBinContent(iBin));
+    for (int iBin = 1; iBin <= nueRates.at(iDet)->GetNbinsX(); iBin ++) {
+      nueRates.at(iDet)->SetBinContent(iBin, nueRates.at(iDet)->GetBinContent(iBin)
+                                       / nueRates.at(iDet)->GetBinWidth(iBin) );
+      nueRates.at(iDet)->SetBinError(iBin, sqrt(matrix->GetBinContent(curr_bin, curr_bin))
+                                     * nueRates.at(iDet)->GetBinContent(iBin));
       // tempHist -> SetBinContent(iBin, matrix->GetBinContent(curr_bin,curr_bin));
       curr_bin ++;
     }
 
     // Set up the plot to look nice...
     TString thisName = nueRates.at(iDet) -> GetName();
-    if (thisName.Contains("100m")) nueRates.at(iDet) -> SetTitle("#nu_{e} Rates at LAr1-ND");
+    if (thisName.Contains("100m")) nueRates.at(iDet) -> SetTitle("#nu_{e} Rates at SBND");
     if (thisName.Contains("470m")) nueRates.at(iDet) -> SetTitle("#nu_{e} Rates at MicroBooNE");
     if (thisName.Contains("600m")) nueRates.at(iDet) -> SetTitle("#nu_{e} Rates at T600");
 
@@ -1070,20 +1135,20 @@ std::vector<TCanvas *> PlotUtils::plotRatesWithErrors(TH2D * matrix,
     // nueUncerts -> cd();
 
 
-    if (numuRates.size() != 0){
-      canvases.push_back(new TCanvas("canv_nue_100m","", 400,300));
+    if (numuRates.size() != 0) {
+      canvases.push_back(new TCanvas("canv_nue_100m", "", 400, 300));
       canvases.back() -> cd();
       // Set the bin errors to be systematic uncertainties
-      for (int iBin = 1; iBin <= numuRates.at(iDet)->GetNbinsX(); iBin ++){
-        numuRates.at(iDet)->SetBinContent(iBin, numuRates.at(iDet)->GetBinContent(iBin) 
-                                              / numuRates.at(iDet)->GetBinWidth(iBin) );
-        numuRates.at(iDet)->SetBinError(iBin, sqrt(matrix->GetBinContent(curr_bin,curr_bin))
-                                              * numuRates.at(iDet)->GetBinContent(iBin));
+      for (int iBin = 1; iBin <= numuRates.at(iDet)->GetNbinsX(); iBin ++) {
+        numuRates.at(iDet)->SetBinContent(iBin, numuRates.at(iDet)->GetBinContent(iBin)
+                                          / numuRates.at(iDet)->GetBinWidth(iBin) );
+        numuRates.at(iDet)->SetBinError(iBin, sqrt(matrix->GetBinContent(curr_bin, curr_bin))
+                                        * numuRates.at(iDet)->GetBinContent(iBin));
         curr_bin ++;
       }
-        
+
       thisName = numuRates.at(iDet) -> GetName();
-      if (thisName.Contains("100m")) numuRates.at(iDet) -> SetTitle("#nu_{#mu} Rates at LAr1-ND");
+      if (thisName.Contains("100m")) numuRates.at(iDet) -> SetTitle("#nu_{#mu} Rates at SBND");
       if (thisName.Contains("470m")) numuRates.at(iDet) -> SetTitle("#nu_{#mu} Rates at MicroBooNE");
       if (thisName.Contains("600m")) numuRates.at(iDet) -> SetTitle("#nu_{#mu} Rates at T600");
 
@@ -1097,7 +1162,7 @@ std::vector<TCanvas *> PlotUtils::plotRatesWithErrors(TH2D * matrix,
 }
 
 TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
-                                  bool use100m, bool use470m, bool use600m, 
+                                  bool use100m, bool use470m, bool use600m,
                                   int nBins_nue,
                                   int nBins_numu)
 {
@@ -1115,12 +1180,12 @@ TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
   else title = matrixName;
 
   char name[100];
-  sprintf(name,"canvas_%d", nCanvas);
+  sprintf(name, "canvas_%d", nCanvas);
 
-  TCanvas * canv = new TCanvas(name, title, 750,750);
+  TCanvas * canv = new TCanvas(name, title, 750, 750);
   canv -> cd();
-  TPad *pad1 = new TPad("pad1","",0,0,1,1);
-  
+  TPad *pad1 = new TPad("pad1", "", 0, 0, 1, 1);
+
   pad1 -> Draw();
   pad1 -> cd();
 
@@ -1129,50 +1194,50 @@ TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
   if (use470m) total_bins += nBins_nue + nBins_numu;
   if (use600m) total_bins += nBins_nue + nBins_numu;
 
-  TH2D * blankHist = new TH2D("blank","",2*total_bins,0,2*total_bins-1,2*total_bins,0,2*total_bins-1);
-  blankHist -> GetYaxis() -> SetBinLabel(1,"");
+  TH2D * blankHist = new TH2D("blank", "", 2 * total_bins, 0, 2 * total_bins - 1, 2 * total_bins, 0, 2 * total_bins - 1);
+  blankHist -> GetYaxis() -> SetBinLabel(1, "");
   // use a counter to keep track of which bin has been labeled:
   int curr_bin = 1;
 
   if (use100m) {
-    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "ND #nu_{e}");
-    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "ND #nu_{e}");
-    blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-    blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_nue)-3, "3 GeV");
+    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "ND #nu_{e}");
+    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "ND #nu_{e}");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_nue) - 3, "3 GeV");
     curr_bin += nBins_nue;
     if (nBins_numu != 0) {
-      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "ND #nu_{#mu}");
-      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "ND #nu_{#mu}");
-      blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-      blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_numu)-3, "3 GeV");
+      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "ND #nu_{#mu}");
+      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "ND #nu_{#mu}");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_numu) - 3, "3 GeV");
       curr_bin += nBins_numu;
     }
   }
   if (use470m) {
-    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "uB #nu_{e}");
-    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "uB #nu_{e}");
-    blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-    blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_nue)-3, "3 GeV");
-    curr_bin += nBins_nue;    
+    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "uB #nu_{e}");
+    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "uB #nu_{e}");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_nue) - 3, "3 GeV");
+    curr_bin += nBins_nue;
     if (nBins_numu != 0) {
-      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "uB #nu_{#mu}");
-      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "uB #nu_{#mu}");
-      blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-      blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_numu)-3, "3 GeV");
+      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "uB #nu_{#mu}");
+      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "uB #nu_{#mu}");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_numu) - 3, "3 GeV");
       curr_bin += nBins_numu;
     }
   }
   if (use600m) {
-    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "T600 #nu_{e}");
-    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue/2, "T600 #nu_{e}");
-    blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-    blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_nue)-3, "3 GeV");
-    curr_bin += nBins_nue;    
+    matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "T600 #nu_{e}");
+    matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_nue / 2, "T600 #nu_{e}");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+    blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_nue) - 3, "3 GeV");
+    curr_bin += nBins_nue;
     if (nBins_numu != 0) {
-      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "T600 #nu_{#mu}");
-      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu/2, "T600 #nu_{#mu}");
-      blankHist -> GetXaxis() -> SetBinLabel(2*curr_bin, "200 MeV");
-      blankHist -> GetXaxis() -> SetBinLabel(2*(curr_bin + nBins_numu)-3, "3 GeV");
+      matrix -> GetXaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "T600 #nu_{#mu}");
+      matrix -> GetYaxis() -> SetBinLabel(curr_bin + nBins_numu / 2, "T600 #nu_{#mu}");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * curr_bin, "200 MeV");
+      blankHist -> GetXaxis() -> SetBinLabel(2 * (curr_bin + nBins_numu) - 3, "3 GeV");
       curr_bin += nBins_numu;
     }
   }
@@ -1183,10 +1248,10 @@ TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
   matrix -> GetXaxis() -> SetLabelSize(0.055);
 
   // // Remove the tick marks:
-  // matrix -> GetXaxis() -> SetTickSize(0);
-  // matrix -> GetYaxis() -> SetTickSize(0);
-  // blankHist -> GetXaxis() -> SetTickSize(0);
-  // blankHist -> GetYaxis() -> SetTickSize(0);
+  matrix -> GetXaxis() -> SetTickSize(0);
+  matrix -> GetYaxis() -> SetTickSize(0);
+  blankHist -> GetXaxis() -> SetTickSize(0);
+  blankHist -> GetYaxis() -> SetTickSize(0);
 
 
 
@@ -1194,7 +1259,7 @@ TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
   // matrix -> Draw("colz");
   // blankHist -> Draw("same");
   matrix -> Draw("colz");
-  TPad *overlay = new TPad("overlay","",0,0,1,1);
+  TPad *overlay = new TPad("overlay", "", 0, 0, 1, 1);
   overlay->SetFillStyle(0);
   overlay->SetFillColor(0);
   overlay->SetFrameFillStyle(0);
@@ -1209,38 +1274,38 @@ TCanvas *  PlotUtils::plot_Matrix(TH2D * matrix, TString matrixName,
   std::vector <TLine *> Lines;
   curr_bin = nBins_nue;
   if (use100m) {
-    Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-    Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
-    if (nBins_numu != 0){
+    Lines.push_back(new TLine(2 * curr_bin - 0.5, 0, 2 * curr_bin - 0.5, 2 * total_bins - 1));
+    Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
+    if (nBins_numu != 0) {
       curr_bin += nBins_numu;
-      Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-      Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
+      Lines.push_back(new TLine(2 * (curr_bin - 0.25), 0, 2 * (curr_bin - 0.25), 2 * total_bins - 1));
+      Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
     }
     curr_bin += nBins_nue;
   }
-  if (use470m){
-    Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-    Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
-    if (nBins_numu != 0){
+  if (use470m) {
+    Lines.push_back(new TLine(2 * (curr_bin - 0.5), 0, 2 * (curr_bin - 0.5), 2 * total_bins - 1));
+    Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
+    if (nBins_numu != 0) {
       curr_bin += nBins_numu;
-      Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-      Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
+      Lines.push_back(new TLine(2 * (curr_bin - 0.25), 0, 2 * (curr_bin - 0.25), 2 * total_bins - 1));
+      Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
     }
     curr_bin += nBins_nue;
   }
-  if (use600m){
-    Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-    Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
-    if (nBins_numu != 0){
+  if (use600m) {
+    Lines.push_back(new TLine(2 * (curr_bin - 0.5), 0, 2 * (curr_bin - 0.5), 2 * total_bins - 1));
+    Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
+    if (nBins_numu != 0) {
       curr_bin += nBins_numu;
-      Lines.push_back(new TLine(2*curr_bin,0,2*curr_bin,2*total_bins-1));
-      Lines.push_back(new TLine(0,2*curr_bin,2*total_bins-1,2*curr_bin));
+      Lines.push_back(new TLine(2 * (curr_bin - 0.25), 0, 2 * (curr_bin - 0.25), 2 * total_bins - 1));
+      Lines.push_back(new TLine(0, 2 * (curr_bin - 0.25), 2 * total_bins - 1, 2 * (curr_bin - 0.25)));
     }
     curr_bin += nBins_nue;
   }
 
-  for (auto & line : Lines){
-    if (line == *(Lines.end() - 2) || line == *(Lines.end() -1)) break;
+  for (auto & line : Lines) {
+    if (line == *(Lines.end() - 2) || line == *(Lines.end() - 1)) break;
     line->SetLineWidth(3);
     line->SetLineStyle(2);
     line->Draw("same");
