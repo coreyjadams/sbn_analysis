@@ -36,8 +36,10 @@ ROOT.gStyle.SetCanvasColor(0)
 ROOT.gStyle.SetPadColor(0)
 
 
-dhlist = [sbn.DataHandle(), sbn.DataHandle()]
-pathlist = ["/data_linux/nominal_ntuples/", "/data_linux/horn_upgrade_repeat/"]
+# dhlist = [sbn.DataHandle(), sbn.DataHandle()]
+dhlist = [sbn.DataHandle()]
+# pathlist = ["/data_linux/nominal_ntuples/", "/data_linux/horn_upgrade_repeat/"]
+pathlist = ["/data_linux/nominal_ntuples/"]
 
 
 utils = sbn.PlotUtils()
@@ -75,16 +77,15 @@ for dh, path in zip(dhlist, pathlist):
     dh.config().sin22thmax = 1.0
     dh.config().npoints = 500
 
-
     # scale some of the backgrounds:
     dh.config().backgroundScales[sbn.kCosmics] = 1-0.95
-    dh.config().backgroundScales[sbn.kNueFromNC_pi0] = 10.0
+    # dh.config().backgroundScales[sbn.kNueFromNC_pi0] = 10.0
 
 # Scale the dirt background in the upgrade by 2:
-dhlist[-1].config().backgroundScales[sbn.kDirt] = 2.0
+# dhlist[-1].config().backgroundScales[sbn.kDirt] = 2.0
 
 detectors = [sbn.kNearDet, sbn.kUboone, sbn.kT600]
-scales = [1.0-0.015, 1.0 - 0.02, 1.0-0.03]
+scales = [1.0-0.015, 2*(1.0 - 0.02), 1.0-0.03]
 
 for det in detectors:
     for dh in dhlist:
@@ -214,9 +215,9 @@ for dh, path in zip(dhlist, pathlist):
             legList[-1].AddEntry(histogramsByType[-1], namesFancy[i])
 
         signalHist = utils.makeHistogram(oscData, sbn.nueBins)
-        stackList[-1].Add(signalHist)
+        # stackList[-1].Add(signalHist)
 
-        totalHist.Add(signalHist)
+        # totalHist.Add(signalHist)
 
         for b in xrange(signalHist.GetNbinsX()):
             totalHist.SetBinError(b+1, math.sqrt(totalHist.GetBinContent(b+1)))
@@ -248,20 +249,23 @@ for dh, path in zip(dhlist, pathlist):
         frame.Draw()
         print maxVal
 
-        sig = "Signal: ( #Deltam^{{2}} = {dm} eV^{{  2}}, sin^{{2}} 2#theta_{{#mue}} = {s2})".format(
-            dm=dm2, s2=sin22th)
+        # sig = "Signal: ( #Deltam^{{2}} = {dm} eV^{{  2}}, sin^{{2}} 2#theta_{{#mue}} = {s2})".format(
+        # dm=dm2, s2=sin22th)
 
         name = "{d}, {l}".format(d=detectorsFancy[det], l=baselinesFancy[det])
         utils.add_plot_label(name, 0.2, 0.87, 0.05, 1, 62, 12)
-        utils.add_plot_label(sig, 0.2, 0.81, 0.04, 1, 62, 12)
+        # utils.add_plot_label(sig, 0.2, 0.81, 0.04, 1, 62, 12)
         utils.add_plot_label(
             "Statistical Uncertainty Only", 0.2, 0.76, 0.04, 1, 62, 12)
 
         if 'upgrade' in path:
-            modeLabel="Upgrade, 6.6e20 POT"
+            modeLabel = "Upgrade, 6.6e20 POT"
         else:
-            modeLabel="Nominal, 6.6e20 POT"
-        utils.add_plot_label(modeLabel,0.2,0.71,0.04,1,62,12)
+            if det is not sbn.kUboone:
+                modeLabel = "Nominal, 6.6e20 POT"
+            else:
+                modeLabel = "Nominal, 1.32e21 POT"
+        utils.add_plot_label(modeLabel, 0.2, 0.71, 0.04, 1, 62, 12)
 
         stackList[-1].Draw("hist same ")
 
@@ -269,7 +273,7 @@ for dh, path in zip(dhlist, pathlist):
 
         legList[-1].Draw()
 
-        dirPath = "/home/cadams/Dropbox/Talks/BeamUpgradeMeeting/HornUpgradePlots3/EventRates/"
+        dirPath = "/home/cadams/Dropbox/Thesis/sbn_figures/"
 
         if 'upgrade' in path:
             name = "upgrade_"
@@ -278,18 +282,21 @@ for dh, path in zip(dhlist, pathlist):
             name = "nominal_"
             txtname = "nominal_"
 
-        name += "nue_appearance_photon10_"
+        name += "nue_appearance_nosig_"
 
-        plotName = name + "{d}_{l}_{d2}_{s2}".format(d=detectorsFancy[det],
-                                                      l=baselinesFancy[det],
-                                                      d2=dm2, s2=sin22th)
-        canvasList[-1].Print(dirPath + plotName + ".pdf", "pdf");
-        canvasList[-1].Print(dirPath + plotName + ".png", "png");
+        # plotName = name + "{d}_{l}_{d2}_{s2}".format(d=detectorsFancy[det],
+        plotName = name + "{d}_{l}".format(d=detectorsFancy[det],
+                                           l=baselinesFancy[det],
+                                           d2=dm2, s2=sin22th)
+        canvasList[-1].Print(dirPath + plotName + ".pdf", "pdf")
+        canvasList[-1].Print(dirPath + plotName + ".png", "png")
 
         # Write the data out into a text file, too:
-        txtname += "eventRates_photon10_{d}_{l}_{d2}_{s2}.txt".format(d=detectorsFancy[det],
-                                                             l=baselinesFancy[det],
-                                                             d2=dm2, s2=sin22th)
+        # txtname +=
+        # "eventRates_{d}_{l}_{d2}_{s2}.txt".format(d=detectorsFancy[det],
+        txtname += "eventRates_nosig_{d}_{l}.txt".format(d=detectorsFancy[det],
+                                                         l=baselinesFancy[det],
+                                                         d2=dm2, s2=sin22th)
 
         f = open(dirPath + txtname, 'w')
         # First line is the categories:
@@ -310,19 +317,18 @@ for dh, path in zip(dhlist, pathlist):
 
             total = 0.0
             for vec in dataByType:
-                f.write('{:^11.2f}'.format(vec[i_bin], align="^"))
+                f.write('{:^11}'.format(int(round(vec[i_bin])), align="^"))
                 total += vec[i_bin]
 
             # Write the signal too:
-            f.write('{:^11.2f}'.format(oscData[i_bin]))
-            f.write('{:^11.2f}'.format(total, align="^"))
+            f.write('{:^11}'.format(int(round(oscData[i_bin]))))
+            f.write('{:^11}'.format(int(round(total)), align="^"))
             f.write('\n')
 
         # Now do the total events:
         f.write('  Total   ')
-        total = 0.0
         for vec in dataByType:
+            total = 0.0
             for point in vec:
                 total += point
-            f.write('{:^11.2f}'.format(total, align="^"))
-
+            f.write('{:^11}'.format(int(round(total)), align="^"))

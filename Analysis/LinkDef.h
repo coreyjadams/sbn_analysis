@@ -14,8 +14,10 @@
 #pragma link C++ class sbn::EventRateUtils+;
 #pragma link C++ class sbn::MatrixUtils+;
 #pragma link C++ class sbn::PlotUtils+;
+#pragma link C++ class FluxReader+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 
 

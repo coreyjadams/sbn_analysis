@@ -13,9 +13,9 @@ names = vector(str)()
 
 
 names.push_back(fileSource+"/nominal_ntuples/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_xsec_0_flux_6_dirt_cos_.root");
-names.push_back(fileSource+"/nominal_ntuples/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_photon10_xsec_0_flux_6_dirt_cos_.root");
-names.push_back(fileSource+"/horn_upgrade_repeat/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_upgrade_xsec_0_flux_6_dirt_cos_.root");
-names.push_back(fileSource+"/horn_upgrade_repeat/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_upgrade_photon10_xsec_0_flux_6_dirt_cos_.root");
+# names.push_back(fileSource+"/nominal_ntuples/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_photon10_xsec_0_flux_6_dirt_cos_.root");
+# names.push_back(fileSource+"/horn_upgrade_repeat/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_upgrade_xsec_0_flux_6_dirt_cos_.root");
+# names.push_back(fileSource+"/horn_upgrade_repeat/sens_plots/altSensPlot_ND_100m_uB_T600_onaxis_nue_appearance_ecalo2_nu_vePhot0.05_gap3_upgrade_photon10_xsec_0_flux_6_dirt_cos_.root");
 
 
 colors = vector(int)();
@@ -34,22 +34,22 @@ legEntry = vector(str)()
 # legEntry.push_back("70% Efficiency");
 # legEntry.push_back("60% Efficiency");
 # legEntry.push_back("50% Efficiency");
-legEntry.push_back("Nominal SBN");
-legEntry.push_back("Nominal SBN, 10x pi0");
-legEntry.push_back("Upgrade");
+legEntry.push_back("Nominal SBN Sensitivity");
+# legEntry.push_back("Nominal SBN, 10x pi0");
+# legEntry.push_back("Upgrade");
 # legEntry.push_back("No Cosmics");
 # legEntry.push_back("No Cosmics No Dirt");
 # legEntry.push_back("100 MeV Threshold");
 # legEntry.push_back("1.5x SBN Statistics");
 # legEntry.push_back("0.5x SBN Statistics");
-legEntry.push_back("Upgrade, 10x pi0")
+# legEntry.push_back("Upgrade, 10x pi0")
 # legEntry.push_back("Horn Upgrade, 25% extra POT ")
 
 index = vector(int)()
 index.push_back(0);
-index.push_back(1);
-index.push_back(2);
-index.push_back(3);
+# index.push_back(1);
+# index.push_back(2);
+# index.push_back(3);
 
 
 
@@ -181,7 +181,7 @@ putils.add_plot_label("90% CL"  ,.905, .206, 0.029, 1, 62, 12);
 # legend.AddEntry(ninetyCLLine,"90% CL Sensitivity","l");
 legend.Draw();
 
-canv2.Print("hornUpgradeSensComparison.png")
-canv2.Print("hornUpgradeSensComparison.pdf")
+canv2.Print("nominalSBNSens.png")
+canv2.Print("nominalSBNSens.pdf")
 
 # nd = input("Waiting for enter ...")
